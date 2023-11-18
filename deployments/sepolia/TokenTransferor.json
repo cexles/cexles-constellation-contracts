@@ -1,0 +1,527 @@
+{
+  "address": "0x05fC4C490125653662057dBD9AD25De9Fe1f9996",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_router",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_link",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "destinationChainSelector",
+          "type": "uint64"
+        }
+      ],
+      "name": "DestinationChainNotAllowlisted",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "FailedToWithdrawEth",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "currentBalance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "calculatedFees",
+          "type": "uint256"
+        }
+      ],
+      "name": "NotEnoughBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NothingToWithdraw",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferRequested",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "messageId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint64",
+          "name": "destinationChainSelector",
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "receiver",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "feeToken",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "fees",
+          "type": "uint256"
+        }
+      ],
+      "name": "TokensTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "acceptOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "_destinationChainSelector",
+          "type": "uint64"
+        },
+        {
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        }
+      ],
+      "name": "allowlistDestinationChain",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "name": "allowlistedChains",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "_destinationChainSelector",
+          "type": "uint64"
+        },
+        {
+          "internalType": "address",
+          "name": "_receiver",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferTokensPayLINK",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "messageId",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "_destinationChainSelector",
+          "type": "uint64"
+        },
+        {
+          "internalType": "address",
+          "name": "_receiver",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferTokensPayNative",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "messageId",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_beneficiary",
+          "type": "address"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_beneficiary",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "transactionHash": "0x0c8bef3e002ac39d8733dd971b802bc7476d2dd9200f0d4f03514d66737b6e71",
+  "receipt": {
+    "to": null,
+    "from": "0x4803003e06Fe7Bc150cC8CB21D12750A1A1bA135",
+    "contractAddress": "0x05fC4C490125653662057dBD9AD25De9Fe1f9996",
+    "transactionIndex": 18,
+    "gasUsed": "1004868",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x45750a1886eb30ea337231e8d50beacfc17c5e4c07f1bcbb29100f955fbfd786",
+    "transactionHash": "0x0c8bef3e002ac39d8733dd971b802bc7476d2dd9200f0d4f03514d66737b6e71",
+    "logs": [],
+    "blockNumber": 4588328,
+    "cumulativeGasUsed": "4212186",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xD0daae2231E9CB96b94C8512223533293C3693Bf",
+    "0x779877A7B0D9E8603169DdbD7836e478b4624789"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "c040870c1516aae5c1f3c4de4d30cb76",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_router\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_link\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"destinationChainSelector\",\"type\":\"uint64\"}],\"name\":\"DestinationChainNotAllowlisted\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"FailedToWithdrawEth\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"currentBalance\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"calculatedFees\",\"type\":\"uint256\"}],\"name\":\"NotEnoughBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NothingToWithdraw\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"OwnershipTransferRequested\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"destinationChainSelector\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"tokenAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"feeToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fees\",\"type\":\"uint256\"}],\"name\":\"TokensTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_destinationChainSelector\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"allowlistDestinationChain\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"name\":\"allowlistedChains\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_destinationChainSelector\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"transferTokensPayLINK\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_destinationChainSelector\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"transferTokensPayNative\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_beneficiary\",\"type\":\"address\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_beneficiary\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"allowlistDestinationChain(uint64,bool)\":{\"details\":\"Updates the allowlist status of a destination chain for transactions.\",\"params\":{\"_destinationChainSelector\":\"The selector of the destination chain to be updated.\",\"allowed\":\"The allowlist status to be set for the destination chain.\"}},\"constructor\":{\"params\":{\"_link\":\"The address of the link contract.\",\"_router\":\"The address of the router contract.\"}},\"transferTokensPayLINK(uint64,address,address,uint256)\":{\"details\":\"Assumes your contract has sufficient LINK tokens to pay for the fees.\",\"params\":{\"_amount\":\"token amount.\",\"_destinationChainSelector\":\"The identifier (aka selector) for the destination blockchain.\",\"_receiver\":\"The address of the recipient on the destination blockchain.\",\"_token\":\"token address.\"},\"returns\":{\"messageId\":\"The ID of the message that was sent.\"}},\"transferTokensPayNative(uint64,address,address,uint256)\":{\"details\":\"Assumes your contract has sufficient native gas like ETH on Ethereum or MATIC on Polygon.\",\"params\":{\"_amount\":\"token amount.\",\"_destinationChainSelector\":\"The identifier (aka selector) for the destination blockchain.\",\"_receiver\":\"The address of the recipient on the destination blockchain.\",\"_token\":\"token address.\"},\"returns\":{\"messageId\":\"The ID of the message that was sent.\"}},\"withdraw(address)\":{\"details\":\"This function reverts if there are no funds to withdraw or if the transfer fails. It should only be callable by the owner of the contract.\",\"params\":{\"_beneficiary\":\"The address to which the Ether should be transferred.\"}},\"withdrawToken(address,address)\":{\"details\":\"This function reverts with a 'NothingToWithdraw' error if there are no tokens to withdraw.\",\"params\":{\"_beneficiary\":\"The address to which the tokens will be sent.\",\"_token\":\"The contract address of the ERC20 token to be withdrawn.\"}}},\"title\":\"- A simple contract for transferring tokens across chains.\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"acceptOwnership()\":{\"notice\":\"Allows an ownership transfer to be completed by the recipient.\"},\"allowlistDestinationChain(uint64,bool)\":{\"notice\":\"This function can only be called by the owner.\"},\"constructor\":{\"notice\":\"Constructor initializes the contract with the router address.\"},\"owner()\":{\"notice\":\"Get the current owner\"},\"transferOwnership(address)\":{\"notice\":\"Allows an owner to begin transferring ownership to a new address, pending.\"},\"transferTokensPayLINK(uint64,address,address,uint256)\":{\"notice\":\"Transfer tokens to receiver on the destination chain.pay in LINK.the token must be in the list of supported tokens.This function can only be called by the owner.\"},\"transferTokensPayNative(uint64,address,address,uint256)\":{\"notice\":\"Transfer tokens to receiver on the destination chain.Pay in native gas such as ETH on Ethereum or MATIC on Polgon.the token must be in the list of supported tokens.This function can only be called by the owner.\"},\"withdraw(address)\":{\"notice\":\"Allows the contract owner to withdraw the entire balance of Ether from the contract.\"},\"withdrawToken(address,address)\":{\"notice\":\"Allows the owner of the contract to withdraw all tokens of a specific ERC20 token.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/TokenTransferor.sol\":\"TokenTransferor\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@chainlink/contracts-ccip/src/v0.8/ConfirmedOwner.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport \\\"./ConfirmedOwnerWithProposal.sol\\\";\\n\\n/**\\n * @title The ConfirmedOwner contract\\n * @notice A contract with helpers for basic contract ownership.\\n */\\ncontract ConfirmedOwner is ConfirmedOwnerWithProposal {\\n  constructor(address newOwner) ConfirmedOwnerWithProposal(newOwner, address(0)) {}\\n}\\n\",\"keccak256\":\"0x99d0b0786fe368970009c703f2249bfbc56340ddf1a28b60d2915bb58c34cd72\",\"license\":\"MIT\"},\"@chainlink/contracts-ccip/src/v0.8/ConfirmedOwnerWithProposal.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport \\\"./interfaces/OwnableInterface.sol\\\";\\n\\n/**\\n * @title The ConfirmedOwner contract\\n * @notice A contract with helpers for basic contract ownership.\\n */\\ncontract ConfirmedOwnerWithProposal is OwnableInterface {\\n  address private s_owner;\\n  address private s_pendingOwner;\\n\\n  event OwnershipTransferRequested(address indexed from, address indexed to);\\n  event OwnershipTransferred(address indexed from, address indexed to);\\n\\n  constructor(address newOwner, address pendingOwner) {\\n    require(newOwner != address(0), \\\"Cannot set owner to zero\\\");\\n\\n    s_owner = newOwner;\\n    if (pendingOwner != address(0)) {\\n      _transferOwnership(pendingOwner);\\n    }\\n  }\\n\\n  /**\\n   * @notice Allows an owner to begin transferring ownership to a new address,\\n   * pending.\\n   */\\n  function transferOwnership(address to) public override onlyOwner {\\n    _transferOwnership(to);\\n  }\\n\\n  /**\\n   * @notice Allows an ownership transfer to be completed by the recipient.\\n   */\\n  function acceptOwnership() external override {\\n    require(msg.sender == s_pendingOwner, \\\"Must be proposed owner\\\");\\n\\n    address oldOwner = s_owner;\\n    s_owner = msg.sender;\\n    s_pendingOwner = address(0);\\n\\n    emit OwnershipTransferred(oldOwner, msg.sender);\\n  }\\n\\n  /**\\n   * @notice Get the current owner\\n   */\\n  function owner() public view override returns (address) {\\n    return s_owner;\\n  }\\n\\n  /**\\n   * @notice validate, transfer ownership, and emit relevant events\\n   */\\n  function _transferOwnership(address to) private {\\n    require(to != msg.sender, \\\"Cannot transfer to self\\\");\\n\\n    s_pendingOwner = to;\\n\\n    emit OwnershipTransferRequested(s_owner, to);\\n  }\\n\\n  /**\\n   * @notice validate access\\n   */\\n  function _validateOwnership() internal view {\\n    require(msg.sender == s_owner, \\\"Only callable by owner\\\");\\n  }\\n\\n  /**\\n   * @notice Reverts if called by anyone other than the contract owner.\\n   */\\n  modifier onlyOwner() {\\n    _validateOwnership();\\n    _;\\n  }\\n}\\n\",\"keccak256\":\"0xa2f137a1d066795aeac76226e58f33c982278cdd34b4f09e5a2243d5a0924654\",\"license\":\"MIT\"},\"@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport {Client} from \\\"../libraries/Client.sol\\\";\\n\\ninterface IRouterClient {\\n  error UnsupportedDestinationChain(uint64 destChainSelector);\\n  error InsufficientFeeTokenAmount();\\n  error InvalidMsgValue();\\n\\n  /// @notice Checks if the given chain ID is supported for sending/receiving.\\n  /// @param chainSelector The chain to check.\\n  /// @return supported is true if it is supported, false if not.\\n  function isChainSupported(uint64 chainSelector) external view returns (bool supported);\\n\\n  /// @notice Gets a list of all supported tokens which can be sent or received\\n  /// to/from a given chain id.\\n  /// @param chainSelector The chainSelector.\\n  /// @return tokens The addresses of all tokens that are supported.\\n  function getSupportedTokens(uint64 chainSelector) external view returns (address[] memory tokens);\\n\\n  /// @param destinationChainSelector The destination chainSelector\\n  /// @param message The cross-chain CCIP message including data and/or tokens\\n  /// @return fee returns guaranteed execution fee for the specified message\\n  /// delivery to destination chain\\n  /// @dev returns 0 fee on invalid message.\\n  function getFee(\\n    uint64 destinationChainSelector,\\n    Client.EVM2AnyMessage memory message\\n  ) external view returns (uint256 fee);\\n\\n  /// @notice Request a message to be sent to the destination chain\\n  /// @param destinationChainSelector The destination chain ID\\n  /// @param message The cross-chain CCIP message including data and/or tokens\\n  /// @return messageId The message ID\\n  /// @dev Note if msg.value is larger than the required fee (from getFee) we accept\\n  /// the overpayment with no refund.\\n  function ccipSend(\\n    uint64 destinationChainSelector,\\n    Client.EVM2AnyMessage calldata message\\n  ) external payable returns (bytes32);\\n}\\n\",\"keccak256\":\"0x9899fab6a40f68408ddf153612c553f2441ea27770176bf71ccce22c40393286\",\"license\":\"MIT\"},\"@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n// End consumer library.\\nlibrary Client {\\n  struct EVMTokenAmount {\\n    address token; // token address on the local chain.\\n    uint256 amount; // Amount of tokens.\\n  }\\n\\n  struct Any2EVMMessage {\\n    bytes32 messageId; // MessageId corresponding to ccipSend on source.\\n    uint64 sourceChainSelector; // Source chain selector.\\n    bytes sender; // abi.decode(sender) if coming from an EVM chain.\\n    bytes data; // payload sent in original message.\\n    EVMTokenAmount[] destTokenAmounts; // Tokens and their amounts in their destination chain representation.\\n  }\\n\\n  // If extraArgs is empty bytes, the default is 200k gas limit and strict = false.\\n  struct EVM2AnyMessage {\\n    bytes receiver; // abi.encode(receiver address) for dest EVM chains\\n    bytes data; // Data payload\\n    EVMTokenAmount[] tokenAmounts; // Token transfers\\n    address feeToken; // Address of feeToken. address(0) means you will send msg.value.\\n    bytes extraArgs; // Populate this with _argsToBytes(EVMExtraArgsV1)\\n  }\\n\\n  // extraArgs will evolve to support new features\\n  // bytes4(keccak256(\\\"CCIP EVMExtraArgsV1\\\"));\\n  bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;\\n  struct EVMExtraArgsV1 {\\n    uint256 gasLimit; // ATTENTION!!! MAX GAS LIMIT 4M FOR BETA TESTING\\n    bool strict; // See strict sequencing details below.\\n  }\\n\\n  function _argsToBytes(EVMExtraArgsV1 memory extraArgs) internal pure returns (bytes memory bts) {\\n    return abi.encodeWithSelector(EVM_EXTRA_ARGS_V1_TAG, extraArgs);\\n  }\\n}\\n\",\"keccak256\":\"0x2fb8e11d517fa5ee213aaab3f4d416155cd2b72d61ba443dbeff6b41d29e9523\",\"license\":\"MIT\"},\"@chainlink/contracts-ccip/src/v0.8/interfaces/OwnableInterface.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface OwnableInterface {\\n  function owner() external returns (address);\\n\\n  function transferOwnership(address recipient) external;\\n\\n  function acceptOwnership() external;\\n}\\n\",\"keccak256\":\"0xb8b3a97783dddc198b790c4cec1eda7fb47aa38cbaea6555220d0ed8c735c086\",\"license\":\"MIT\"},\"@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport {ConfirmedOwner} from \\\"../../ConfirmedOwner.sol\\\";\\n\\n/// @title The OwnerIsCreator contract\\n/// @notice A contract with helpers for basic contract ownership.\\ncontract OwnerIsCreator is ConfirmedOwner {\\n  constructor() ConfirmedOwner(msg.sender) {}\\n}\\n\",\"keccak256\":\"0x010d0a67d81c4020004f72d95e8a7b08b98178de026e96565f315806e7525ada\",\"license\":\"MIT\"},\"@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n  /**\\n   * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n   * another (`to`).\\n   *\\n   * Note that `value` may be zero.\\n   */\\n  event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n  /**\\n   * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n   * a call to {approve}. `value` is the new allowance.\\n   */\\n  event Approval(address indexed owner, address indexed spender, uint256 value);\\n\\n  /**\\n   * @dev Returns the amount of tokens in existence.\\n   */\\n  function totalSupply() external view returns (uint256);\\n\\n  /**\\n   * @dev Returns the amount of tokens owned by `account`.\\n   */\\n  function balanceOf(address account) external view returns (uint256);\\n\\n  /**\\n   * @dev Moves `amount` tokens from the caller's account to `to`.\\n   *\\n   * Returns a boolean value indicating whether the operation succeeded.\\n   *\\n   * Emits a {Transfer} event.\\n   */\\n  function transfer(address to, uint256 amount) external returns (bool);\\n\\n  /**\\n   * @dev Returns the remaining number of tokens that `spender` will be\\n   * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n   * zero by default.\\n   *\\n   * This value changes when {approve} or {transferFrom} are called.\\n   */\\n  function allowance(address owner, address spender) external view returns (uint256);\\n\\n  /**\\n   * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\\n   *\\n   * Returns a boolean value indicating whether the operation succeeded.\\n   *\\n   * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n   * that someone may use both the old and the new allowance by unfortunate\\n   * transaction ordering. One possible solution to mitigate this race\\n   * condition is to first reduce the spender's allowance to 0 and set the\\n   * desired value afterwards:\\n   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n   *\\n   * Emits an {Approval} event.\\n   */\\n  function approve(address spender, uint256 amount) external returns (bool);\\n\\n  /**\\n   * @dev Moves `amount` tokens from `from` to `to` using the\\n   * allowance mechanism. `amount` is then deducted from the caller's\\n   * allowance.\\n   *\\n   * Returns a boolean value indicating whether the operation succeeded.\\n   *\\n   * Emits a {Transfer} event.\\n   */\\n  function transferFrom(\\n    address from,\\n    address to,\\n    uint256 amount\\n  ) external returns (bool);\\n}\",\"keccak256\":\"0xf7a52b7d3a7b79117544d6bbeb8564bd22c760c4937d69914b99641a957a8f2a\",\"license\":\"MIT\"},\"contracts/TokenTransferor.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity 0.8.20;\\n\\nimport {IRouterClient} from \\\"@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol\\\";\\nimport {OwnerIsCreator} from \\\"@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol\\\";\\nimport {Client} from \\\"@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol\\\";\\nimport {IERC20} from \\\"@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol\\\";\\n\\n/**\\n * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.\\n * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.\\n * DO NOT USE THIS CODE IN PRODUCTION.\\n */\\n\\n/// @title - A simple contract for transferring tokens across chains.\\ncontract TokenTransferor is OwnerIsCreator {\\n    // Custom errors to provide more descriptive revert messages.\\n    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance to cover the fees.\\n    error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.\\n    error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.\\n    error DestinationChainNotAllowlisted(uint64 destinationChainSelector); // Used when the destination chain has not been allowlisted by the contract owner.\\n    // Event emitted when the tokens are transferred to an account on another chain.\\n    event TokensTransferred(\\n        bytes32 indexed messageId, // The unique ID of the message.\\n        uint64 indexed destinationChainSelector, // The chain selector of the destination chain.\\n        address receiver, // The address of the receiver on the destination chain.\\n        address token, // The token address that was transferred.\\n        uint256 tokenAmount, // The token amount that was transferred.\\n        address feeToken, // the token address used to pay CCIP fees.\\n        uint256 fees // The fees paid for sending the message.\\n    );\\n\\n    // Mapping to keep track of allowlisted destination chains.\\n    mapping(uint64 => bool) public allowlistedChains;\\n\\n    IRouterClient private s_router;\\n\\n    IERC20 private s_linkToken;\\n\\n    /// @notice Constructor initializes the contract with the router address.\\n    /// @param _router The address of the router contract.\\n    /// @param _link The address of the link contract.\\n    constructor(address _router, address _link) {\\n        s_router = IRouterClient(_router);\\n        s_linkToken = IERC20(_link);\\n    }\\n\\n    /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.\\n    /// @param _destinationChainSelector The selector of the destination chain.\\n    modifier onlyAllowlistedChain(uint64 _destinationChainSelector) {\\n        if (!allowlistedChains[_destinationChainSelector])\\n            revert DestinationChainNotAllowlisted(_destinationChainSelector);\\n        _;\\n    }\\n\\n    /// @dev Updates the allowlist status of a destination chain for transactions.\\n    /// @notice This function can only be called by the owner.\\n    /// @param _destinationChainSelector The selector of the destination chain to be updated.\\n    /// @param allowed The allowlist status to be set for the destination chain.\\n    function allowlistDestinationChain(uint64 _destinationChainSelector, bool allowed) external onlyOwner {\\n        allowlistedChains[_destinationChainSelector] = allowed;\\n    }\\n\\n    /// @notice Transfer tokens to receiver on the destination chain.\\n    /// @notice pay in LINK.\\n    /// @notice the token must be in the list of supported tokens.\\n    /// @notice This function can only be called by the owner.\\n    /// @dev Assumes your contract has sufficient LINK tokens to pay for the fees.\\n    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.\\n    /// @param _receiver The address of the recipient on the destination blockchain.\\n    /// @param _token token address.\\n    /// @param _amount token amount.\\n    /// @return messageId The ID of the message that was sent.\\n    function transferTokensPayLINK(\\n        uint64 _destinationChainSelector,\\n        address _receiver,\\n        address _token,\\n        uint256 _amount\\n    ) external onlyOwner onlyAllowlistedChain(_destinationChainSelector) returns (bytes32 messageId) {\\n        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message\\n        //  address(linkToken) means fees are paid in LINK\\n        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(\\n            _receiver,\\n            _token,\\n            _amount,\\n            address(s_linkToken)\\n        );\\n\\n        // Get the fee required to send the message\\n        uint256 fees = s_router.getFee(_destinationChainSelector, evm2AnyMessage);\\n\\n        if (fees > s_linkToken.balanceOf(address(this)))\\n            revert NotEnoughBalance(s_linkToken.balanceOf(address(this)), fees);\\n\\n        // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK\\n        s_linkToken.approve(address(s_router), fees);\\n\\n        // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token\\n        IERC20(_token).approve(address(s_router), _amount);\\n\\n        // Send the message through the router and store the returned message ID\\n        messageId = s_router.ccipSend(_destinationChainSelector, evm2AnyMessage);\\n\\n        // Emit an event with message details\\n        emit TokensTransferred(\\n            messageId,\\n            _destinationChainSelector,\\n            _receiver,\\n            _token,\\n            _amount,\\n            address(s_linkToken),\\n            fees\\n        );\\n\\n        // Return the message ID\\n        return messageId;\\n    }\\n\\n    /// @notice Transfer tokens to receiver on the destination chain.\\n    /// @notice Pay in native gas such as ETH on Ethereum or MATIC on Polgon.\\n    /// @notice the token must be in the list of supported tokens.\\n    /// @notice This function can only be called by the owner.\\n    /// @dev Assumes your contract has sufficient native gas like ETH on Ethereum or MATIC on Polygon.\\n    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.\\n    /// @param _receiver The address of the recipient on the destination blockchain.\\n    /// @param _token token address.\\n    /// @param _amount token amount.\\n    /// @return messageId The ID of the message that was sent.\\n    function transferTokensPayNative(\\n        uint64 _destinationChainSelector,\\n        address _receiver,\\n        address _token,\\n        uint256 _amount\\n    ) external onlyOwner onlyAllowlistedChain(_destinationChainSelector) returns (bytes32 messageId) {\\n        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message\\n        // address(0) means fees are paid in native gas\\n        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(_receiver, _token, _amount, address(0));\\n\\n        // Get the fee required to send the message\\n        uint256 fees = s_router.getFee(_destinationChainSelector, evm2AnyMessage);\\n\\n        if (fees > address(this).balance) revert NotEnoughBalance(address(this).balance, fees);\\n\\n        // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token\\n        IERC20(_token).approve(address(s_router), _amount);\\n\\n        // Send the message through the router and store the returned message ID\\n        messageId = s_router.ccipSend{value: fees}(_destinationChainSelector, evm2AnyMessage);\\n\\n        // Emit an event with message details\\n        emit TokensTransferred(messageId, _destinationChainSelector, _receiver, _token, _amount, address(0), fees);\\n\\n        // Return the message ID\\n        return messageId;\\n    }\\n\\n    /// @notice Construct a CCIP message.\\n    /// @dev This function will create an EVM2AnyMessage struct with all the necessary information for tokens transfer.\\n    /// @param _receiver The address of the receiver.\\n    /// @param _token The token to be transferred.\\n    /// @param _amount The amount of the token to be transferred.\\n    /// @param _feeTokenAddress The address of the token used for fees. Set address(0) for native gas.\\n    /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.\\n    function _buildCCIPMessage(\\n        address _receiver,\\n        address _token,\\n        uint256 _amount,\\n        address _feeTokenAddress\\n    ) internal pure returns (Client.EVM2AnyMessage memory) {\\n        // Set the token amounts\\n        Client.EVMTokenAmount[] memory tokenAmounts = new Client.EVMTokenAmount[](1);\\n        tokenAmounts[0] = Client.EVMTokenAmount({token: _token, amount: _amount});\\n\\n        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message\\n        return\\n            Client.EVM2AnyMessage({\\n                receiver: abi.encode(_receiver), // ABI-encoded receiver address\\n                data: \\\"\\\", // No data\\n                tokenAmounts: tokenAmounts, // The amount and type of token being transferred\\n                extraArgs: Client._argsToBytes(\\n                    // Additional arguments, setting gas limit to 0 as we are not sending any data and non-strict sequencing mode\\n                    Client.EVMExtraArgsV1({gasLimit: 0, strict: false})\\n                ),\\n                // Set the feeToken to a feeTokenAddress, indicating specific asset will be used for fees\\n                feeToken: _feeTokenAddress\\n            });\\n    }\\n\\n    /// @notice Fallback function to allow the contract to receive Ether.\\n    /// @dev This function has no function body, making it a default function for receiving Ether.\\n    /// It is automatically called when Ether is transferred to the contract without any data.\\n    receive() external payable {}\\n\\n    /// @notice Allows the contract owner to withdraw the entire balance of Ether from the contract.\\n    /// @dev This function reverts if there are no funds to withdraw or if the transfer fails.\\n    /// It should only be callable by the owner of the contract.\\n    /// @param _beneficiary The address to which the Ether should be transferred.\\n    function withdraw(address _beneficiary) public onlyOwner {\\n        // Retrieve the balance of this contract\\n        uint256 amount = address(this).balance;\\n\\n        // Revert if there is nothing to withdraw\\n        if (amount == 0) revert NothingToWithdraw();\\n\\n        // Attempt to send the funds, capturing the success status and discarding any return data\\n        (bool sent, ) = _beneficiary.call{value: amount}(\\\"\\\");\\n\\n        // Revert if the send failed, with information about the attempted transfer\\n        if (!sent) revert FailedToWithdrawEth(msg.sender, _beneficiary, amount);\\n    }\\n\\n    /// @notice Allows the owner of the contract to withdraw all tokens of a specific ERC20 token.\\n    /// @dev This function reverts with a 'NothingToWithdraw' error if there are no tokens to withdraw.\\n    /// @param _beneficiary The address to which the tokens will be sent.\\n    /// @param _token The contract address of the ERC20 token to be withdrawn.\\n    function withdrawToken(address _beneficiary, address _token) public onlyOwner {\\n        // Retrieve the balance of this contract\\n        uint256 amount = IERC20(_token).balanceOf(address(this));\\n\\n        // Revert if there is nothing to withdraw\\n        if (amount == 0) revert NothingToWithdraw();\\n\\n        IERC20(_token).transfer(_beneficiary, amount);\\n    }\\n}\\n\",\"keccak256\":\"0x3d259bf438bce618a27e9c064c424591994467d1a53aa815a1d18483585f18e4\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801562000010575f80fd5b50604051620011d5380380620011d58339810160408190526200003391620001ba565b33805f81620000895760405162461bcd60e51b815260206004820152601860248201527f43616e6e6f7420736574206f776e657220746f207a65726f000000000000000060448201526064015b60405180910390fd5b5f80546001600160a01b0319166001600160a01b0384811691909117909155811615620000bb57620000bb81620000f4565b5050600380546001600160a01b039485166001600160a01b031991821617909155600480549390941692169190911790915550620001f0565b336001600160a01b038216036200014e5760405162461bcd60e51b815260206004820152601760248201527f43616e6e6f74207472616e7366657220746f2073656c66000000000000000000604482015260640162000080565b600180546001600160a01b0319166001600160a01b038381169182179092555f8054604051929316917fed8889f560326eb138920d842192f0eb3dd22b4f139c87a2c57538e05bae12789190a350565b80516001600160a01b0381168114620001b5575f80fd5b919050565b5f8060408385031215620001cc575f80fd5b620001d7836200019e565b9150620001e7602084016200019e565b90509250929050565b610fd780620001fe5f395ff3fe608060405260043610610087575f3560e01c806379ba50971161005757806379ba5097146101425780638da5cb5b1461015657806395e1402c1461017c57806396d3b83d1461019b578063f2fde38b146101ba575f80fd5b80630bb106eb146100925780633aeac4e1146100d557806351419b4b146100f657806351cff8d914610123575f80fd5b3661008e57005b5f80fd5b34801561009d575f80fd5b506100c06100ac366004610d36565b60026020525f908152604090205460ff1681565b60405190151581526020015b60405180910390f35b3480156100e0575f80fd5b506100f46100ef366004610d6c565b6101d9565b005b348015610101575f80fd5b50610115610110366004610d9d565b6102e1565b6040519081526020016100cc565b34801561012e575f80fd5b506100f461013d366004610de5565b610544565b34801561014d575f80fd5b506100f46105fb565b348015610161575f80fd5b505f546040516001600160a01b0390911681526020016100cc565b348015610187575f80fd5b50610115610196366004610d9d565b6106a4565b3480156101a6575f80fd5b506100f46101b5366004610e0b565b610a58565b3480156101c5575f80fd5b506100f46101d4366004610de5565b610a8b565b6101e1610a9f565b6040516370a0823160e01b81523060048201525f906001600160a01b038316906370a0823190602401602060405180830381865afa158015610225573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102499190610e40565b9050805f0361026b57604051630686827b60e51b815260040160405180910390fd5b60405163a9059cbb60e01b81526001600160a01b0384811660048301526024820183905283169063a9059cbb906044016020604051808303815f875af11580156102b7573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102db9190610e57565b50505050565b5f6102ea610a9f565b67ffffffffffffffff85165f90815260026020526040902054859060ff1661033657604051630a503cdb60e01b815267ffffffffffffffff821660048201526024015b60405180910390fd5b5f6103438686865f610af3565b6003546040516320487ded60e01b81529192505f916001600160a01b03909116906320487ded9061037a908b908690600401610eb5565b602060405180830381865afa158015610395573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906103b99190610e40565b9050478111156103e557604051634787a10360e11b81524760048201526024810182905260440161032d565b60035460405163095ea7b360e01b81526001600160a01b039182166004820152602481018790529087169063095ea7b3906044016020604051808303815f875af1158015610435573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906104599190610e57565b506003546040516396f4e9f960e01b81526001600160a01b03909116906396f4e9f990839061048e908c908790600401610eb5565b60206040518083038185885af11580156104aa573d5f803e3d5ffd5b50505050506040513d601f19601f820116820180604052508101906104cf9190610e40565b604080516001600160a01b03808b168252891660208201529081018790525f60608201526080810183905290945067ffffffffffffffff89169085907fc15fb748c32ba4eb29c1c311e78533f93b4425eab49ea87c6fe4279ecadca0439060a0015b60405180910390a3505050949350505050565b61054c610a9f565b475f81900361056e57604051630686827b60e51b815260040160405180910390fd5b5f826001600160a01b0316826040515f6040518083038185875af1925050503d805f81146105b7576040519150601f19603f3d011682016040523d82523d5f602084013e6105bc565b606091505b50509050806105f657604051639d11f56360e01b81523360048201526001600160a01b03841660248201526044810183905260640161032d565b505050565b6001546001600160a01b0316331461064e5760405162461bcd60e51b815260206004820152601660248201527526bab9ba10313290383937b837b9b2b21037bbb732b960511b604482015260640161032d565b5f8054336001600160a01b0319808316821784556001805490911690556040516001600160a01b0390921692909183917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a350565b5f6106ad610a9f565b67ffffffffffffffff85165f90815260026020526040902054859060ff166106f457604051630a503cdb60e01b815267ffffffffffffffff8216600482015260240161032d565b6004545f90610711908790879087906001600160a01b0316610af3565b6003546040516320487ded60e01b81529192505f916001600160a01b03909116906320487ded90610748908b908690600401610eb5565b602060405180830381865afa158015610763573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906107879190610e40565b600480546040516370a0823160e01b815230928101929092529192506001600160a01b03909116906370a0823190602401602060405180830381865afa1580156107d3573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906107f79190610e40565b81111561088d57600480546040516370a0823160e01b815230928101929092526001600160a01b0316906370a0823190602401602060405180830381865afa158015610845573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906108699190610e40565b604051634787a10360e11b815260048101919091526024810182905260440161032d565b6004805460035460405163095ea7b360e01b81526001600160a01b039182169381019390935260248301849052169063095ea7b3906044016020604051808303815f875af11580156108e1573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906109059190610e57565b5060035460405163095ea7b360e01b81526001600160a01b039182166004820152602481018790529087169063095ea7b3906044016020604051808303815f875af1158015610956573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061097a9190610e57565b506003546040516396f4e9f960e01b81526001600160a01b03909116906396f4e9f9906109ad908b908690600401610eb5565b6020604051808303815f875af11580156109c9573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906109ed9190610e40565b600454604080516001600160a01b03808c168252808b166020830152918101899052911660608201526080810183905290945067ffffffffffffffff89169085907fc15fb748c32ba4eb29c1c311e78533f93b4425eab49ea87c6fe4279ecadca0439060a001610531565b610a60610a9f565b67ffffffffffffffff919091165f908152600260205260409020805460ff1916911515919091179055565b610a93610a9f565b610a9c81610c72565b50565b5f546001600160a01b03163314610af15760405162461bcd60e51b815260206004820152601660248201527527b7363c9031b0b63630b1363290313c9037bbb732b960511b604482015260640161032d565b565b610b2d6040518060a001604052806060815260200160608152602001606081526020015f6001600160a01b03168152602001606081525090565b6040805160018082528183019092525f91816020015b604080518082019091525f8082526020820152815260200190600190039081610b435790505090506040518060400160405280866001600160a01b0316815260200185815250815f81518110610b9b57610b9b610f8d565b60209081029190910101526040805160a081019091526001600160a01b03871660c08201528060e08101604051602081830303815290604052815260200160405180602001604052805f8152508152602001828152602001846001600160a01b03168152602001610c6660405180604001604052805f81526020015f15158152506040805182516024820152602092830151151560448083019190915282518083039091018152606490910190915290810180516001600160e01b03166397a657c960e01b17905290565b90529695505050505050565b336001600160a01b03821603610cca5760405162461bcd60e51b815260206004820152601760248201527f43616e6e6f74207472616e7366657220746f2073656c66000000000000000000604482015260640161032d565b600180546001600160a01b0319166001600160a01b038381169182179092555f8054604051929316917fed8889f560326eb138920d842192f0eb3dd22b4f139c87a2c57538e05bae12789190a350565b803567ffffffffffffffff81168114610d31575f80fd5b919050565b5f60208284031215610d46575f80fd5b610d4f82610d1a565b9392505050565b80356001600160a01b0381168114610d31575f80fd5b5f8060408385031215610d7d575f80fd5b610d8683610d56565b9150610d9460208401610d56565b90509250929050565b5f805f8060808587031215610db0575f80fd5b610db985610d1a565b9350610dc760208601610d56565b9250610dd560408601610d56565b9396929550929360600135925050565b5f60208284031215610df5575f80fd5b610d4f82610d56565b8015158114610a9c575f80fd5b5f8060408385031215610e1c575f80fd5b610e2583610d1a565b91506020830135610e3581610dfe565b809150509250929050565b5f60208284031215610e50575f80fd5b5051919050565b5f60208284031215610e67575f80fd5b8151610d4f81610dfe565b5f81518084525f5b81811015610e9657602081850181015186830182015201610e7a565b505f602082860101526020601f19601f83011685010191505092915050565b5f604067ffffffffffffffff8516835260208181850152845160a083860152610ee160e0860182610e72565b905081860151603f1980878403016060880152610efe8383610e72565b88860151888203830160808a0152805180835290860194505f9350908501905b80841015610f5057845180516001600160a01b0316835286015186830152938501936001939093019290860190610f1e565b5060608901516001600160a01b031660a08901526080890151888203830160c08a01529550610f7f8187610e72565b9a9950505050505050505050565b634e487b7160e01b5f52603260045260245ffdfea26469706673582212203b6f1d227bae3efb2d158ed0e4f18fb5a0a18ecb19b945d6153e2925b881070964736f6c63430008140033",
+  "deployedBytecode": "0x608060405260043610610087575f3560e01c806379ba50971161005757806379ba5097146101425780638da5cb5b1461015657806395e1402c1461017c57806396d3b83d1461019b578063f2fde38b146101ba575f80fd5b80630bb106eb146100925780633aeac4e1146100d557806351419b4b146100f657806351cff8d914610123575f80fd5b3661008e57005b5f80fd5b34801561009d575f80fd5b506100c06100ac366004610d36565b60026020525f908152604090205460ff1681565b60405190151581526020015b60405180910390f35b3480156100e0575f80fd5b506100f46100ef366004610d6c565b6101d9565b005b348015610101575f80fd5b50610115610110366004610d9d565b6102e1565b6040519081526020016100cc565b34801561012e575f80fd5b506100f461013d366004610de5565b610544565b34801561014d575f80fd5b506100f46105fb565b348015610161575f80fd5b505f546040516001600160a01b0390911681526020016100cc565b348015610187575f80fd5b50610115610196366004610d9d565b6106a4565b3480156101a6575f80fd5b506100f46101b5366004610e0b565b610a58565b3480156101c5575f80fd5b506100f46101d4366004610de5565b610a8b565b6101e1610a9f565b6040516370a0823160e01b81523060048201525f906001600160a01b038316906370a0823190602401602060405180830381865afa158015610225573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102499190610e40565b9050805f0361026b57604051630686827b60e51b815260040160405180910390fd5b60405163a9059cbb60e01b81526001600160a01b0384811660048301526024820183905283169063a9059cbb906044016020604051808303815f875af11580156102b7573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102db9190610e57565b50505050565b5f6102ea610a9f565b67ffffffffffffffff85165f90815260026020526040902054859060ff1661033657604051630a503cdb60e01b815267ffffffffffffffff821660048201526024015b60405180910390fd5b5f6103438686865f610af3565b6003546040516320487ded60e01b81529192505f916001600160a01b03909116906320487ded9061037a908b908690600401610eb5565b602060405180830381865afa158015610395573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906103b99190610e40565b9050478111156103e557604051634787a10360e11b81524760048201526024810182905260440161032d565b60035460405163095ea7b360e01b81526001600160a01b039182166004820152602481018790529087169063095ea7b3906044016020604051808303815f875af1158015610435573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906104599190610e57565b506003546040516396f4e9f960e01b81526001600160a01b03909116906396f4e9f990839061048e908c908790600401610eb5565b60206040518083038185885af11580156104aa573d5f803e3d5ffd5b50505050506040513d601f19601f820116820180604052508101906104cf9190610e40565b604080516001600160a01b03808b168252891660208201529081018790525f60608201526080810183905290945067ffffffffffffffff89169085907fc15fb748c32ba4eb29c1c311e78533f93b4425eab49ea87c6fe4279ecadca0439060a0015b60405180910390a3505050949350505050565b61054c610a9f565b475f81900361056e57604051630686827b60e51b815260040160405180910390fd5b5f826001600160a01b0316826040515f6040518083038185875af1925050503d805f81146105b7576040519150601f19603f3d011682016040523d82523d5f602084013e6105bc565b606091505b50509050806105f657604051639d11f56360e01b81523360048201526001600160a01b03841660248201526044810183905260640161032d565b505050565b6001546001600160a01b0316331461064e5760405162461bcd60e51b815260206004820152601660248201527526bab9ba10313290383937b837b9b2b21037bbb732b960511b604482015260640161032d565b5f8054336001600160a01b0319808316821784556001805490911690556040516001600160a01b0390921692909183917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a350565b5f6106ad610a9f565b67ffffffffffffffff85165f90815260026020526040902054859060ff166106f457604051630a503cdb60e01b815267ffffffffffffffff8216600482015260240161032d565b6004545f90610711908790879087906001600160a01b0316610af3565b6003546040516320487ded60e01b81529192505f916001600160a01b03909116906320487ded90610748908b908690600401610eb5565b602060405180830381865afa158015610763573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906107879190610e40565b600480546040516370a0823160e01b815230928101929092529192506001600160a01b03909116906370a0823190602401602060405180830381865afa1580156107d3573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906107f79190610e40565b81111561088d57600480546040516370a0823160e01b815230928101929092526001600160a01b0316906370a0823190602401602060405180830381865afa158015610845573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906108699190610e40565b604051634787a10360e11b815260048101919091526024810182905260440161032d565b6004805460035460405163095ea7b360e01b81526001600160a01b039182169381019390935260248301849052169063095ea7b3906044016020604051808303815f875af11580156108e1573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906109059190610e57565b5060035460405163095ea7b360e01b81526001600160a01b039182166004820152602481018790529087169063095ea7b3906044016020604051808303815f875af1158015610956573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061097a9190610e57565b506003546040516396f4e9f960e01b81526001600160a01b03909116906396f4e9f9906109ad908b908690600401610eb5565b6020604051808303815f875af11580156109c9573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906109ed9190610e40565b600454604080516001600160a01b03808c168252808b166020830152918101899052911660608201526080810183905290945067ffffffffffffffff89169085907fc15fb748c32ba4eb29c1c311e78533f93b4425eab49ea87c6fe4279ecadca0439060a001610531565b610a60610a9f565b67ffffffffffffffff919091165f908152600260205260409020805460ff1916911515919091179055565b610a93610a9f565b610a9c81610c72565b50565b5f546001600160a01b03163314610af15760405162461bcd60e51b815260206004820152601660248201527527b7363c9031b0b63630b1363290313c9037bbb732b960511b604482015260640161032d565b565b610b2d6040518060a001604052806060815260200160608152602001606081526020015f6001600160a01b03168152602001606081525090565b6040805160018082528183019092525f91816020015b604080518082019091525f8082526020820152815260200190600190039081610b435790505090506040518060400160405280866001600160a01b0316815260200185815250815f81518110610b9b57610b9b610f8d565b60209081029190910101526040805160a081019091526001600160a01b03871660c08201528060e08101604051602081830303815290604052815260200160405180602001604052805f8152508152602001828152602001846001600160a01b03168152602001610c6660405180604001604052805f81526020015f15158152506040805182516024820152602092830151151560448083019190915282518083039091018152606490910190915290810180516001600160e01b03166397a657c960e01b17905290565b90529695505050505050565b336001600160a01b03821603610cca5760405162461bcd60e51b815260206004820152601760248201527f43616e6e6f74207472616e7366657220746f2073656c66000000000000000000604482015260640161032d565b600180546001600160a01b0319166001600160a01b038381169182179092555f8054604051929316917fed8889f560326eb138920d842192f0eb3dd22b4f139c87a2c57538e05bae12789190a350565b803567ffffffffffffffff81168114610d31575f80fd5b919050565b5f60208284031215610d46575f80fd5b610d4f82610d1a565b9392505050565b80356001600160a01b0381168114610d31575f80fd5b5f8060408385031215610d7d575f80fd5b610d8683610d56565b9150610d9460208401610d56565b90509250929050565b5f805f8060808587031215610db0575f80fd5b610db985610d1a565b9350610dc760208601610d56565b9250610dd560408601610d56565b9396929550929360600135925050565b5f60208284031215610df5575f80fd5b610d4f82610d56565b8015158114610a9c575f80fd5b5f8060408385031215610e1c575f80fd5b610e2583610d1a565b91506020830135610e3581610dfe565b809150509250929050565b5f60208284031215610e50575f80fd5b5051919050565b5f60208284031215610e67575f80fd5b8151610d4f81610dfe565b5f81518084525f5b81811015610e9657602081850181015186830182015201610e7a565b505f602082860101526020601f19601f83011685010191505092915050565b5f604067ffffffffffffffff8516835260208181850152845160a083860152610ee160e0860182610e72565b905081860151603f1980878403016060880152610efe8383610e72565b88860151888203830160808a0152805180835290860194505f9350908501905b80841015610f5057845180516001600160a01b0316835286015186830152938501936001939093019290860190610f1e565b5060608901516001600160a01b031660a08901526080890151888203830160c08a01529550610f7f8187610e72565b9a9950505050505050505050565b634e487b7160e01b5f52603260045260245ffdfea26469706673582212203b6f1d227bae3efb2d158ed0e4f18fb5a0a18ecb19b945d6153e2925b881070964736f6c63430008140033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "allowlistDestinationChain(uint64,bool)": {
+        "details": "Updates the allowlist status of a destination chain for transactions.",
+        "params": {
+          "_destinationChainSelector": "The selector of the destination chain to be updated.",
+          "allowed": "The allowlist status to be set for the destination chain."
+        }
+      },
+      "constructor": {
+        "params": {
+          "_link": "The address of the link contract.",
+          "_router": "The address of the router contract."
+        }
+      },
+      "transferTokensPayLINK(uint64,address,address,uint256)": {
+        "details": "Assumes your contract has sufficient LINK tokens to pay for the fees.",
+        "params": {
+          "_amount": "token amount.",
+          "_destinationChainSelector": "The identifier (aka selector) for the destination blockchain.",
+          "_receiver": "The address of the recipient on the destination blockchain.",
+          "_token": "token address."
+        },
+        "returns": {
+          "messageId": "The ID of the message that was sent."
+        }
+      },
+      "transferTokensPayNative(uint64,address,address,uint256)": {
+        "details": "Assumes your contract has sufficient native gas like ETH on Ethereum or MATIC on Polygon.",
+        "params": {
+          "_amount": "token amount.",
+          "_destinationChainSelector": "The identifier (aka selector) for the destination blockchain.",
+          "_receiver": "The address of the recipient on the destination blockchain.",
+          "_token": "token address."
+        },
+        "returns": {
+          "messageId": "The ID of the message that was sent."
+        }
+      },
+      "withdraw(address)": {
+        "details": "This function reverts if there are no funds to withdraw or if the transfer fails. It should only be callable by the owner of the contract.",
+        "params": {
+          "_beneficiary": "The address to which the Ether should be transferred."
+        }
+      },
+      "withdrawToken(address,address)": {
+        "details": "This function reverts with a 'NothingToWithdraw' error if there are no tokens to withdraw.",
+        "params": {
+          "_beneficiary": "The address to which the tokens will be sent.",
+          "_token": "The contract address of the ERC20 token to be withdrawn."
+        }
+      }
+    },
+    "title": "- A simple contract for transferring tokens across chains.",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "acceptOwnership()": {
+        "notice": "Allows an ownership transfer to be completed by the recipient."
+      },
+      "allowlistDestinationChain(uint64,bool)": {
+        "notice": "This function can only be called by the owner."
+      },
+      "constructor": {
+        "notice": "Constructor initializes the contract with the router address."
+      },
+      "owner()": {
+        "notice": "Get the current owner"
+      },
+      "transferOwnership(address)": {
+        "notice": "Allows an owner to begin transferring ownership to a new address, pending."
+      },
+      "transferTokensPayLINK(uint64,address,address,uint256)": {
+        "notice": "Transfer tokens to receiver on the destination chain.pay in LINK.the token must be in the list of supported tokens.This function can only be called by the owner."
+      },
+      "transferTokensPayNative(uint64,address,address,uint256)": {
+        "notice": "Transfer tokens to receiver on the destination chain.Pay in native gas such as ETH on Ethereum or MATIC on Polgon.the token must be in the list of supported tokens.This function can only be called by the owner."
+      },
+      "withdraw(address)": {
+        "notice": "Allows the contract owner to withdraw the entire balance of Ether from the contract."
+      },
+      "withdrawToken(address,address)": {
+        "notice": "Allows the owner of the contract to withdraw all tokens of a specific ERC20 token."
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 27,
+        "contract": "contracts/TokenTransferor.sol:TokenTransferor",
+        "label": "s_owner",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 29,
+        "contract": "contracts/TokenTransferor.sol:TokenTransferor",
+        "label": "s_pendingOwner",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 453,
+        "contract": "contracts/TokenTransferor.sol:TokenTransferor",
+        "label": "allowlistedChains",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_uint64,t_bool)"
+      },
+      {
+        "astId": 456,
+        "contract": "contracts/TokenTransferor.sol:TokenTransferor",
+        "label": "s_router",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_contract(IRouterClient)233"
+      },
+      {
+        "astId": 459,
+        "contract": "contracts/TokenTransferor.sol:TokenTransferor",
+        "label": "s_linkToken",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_contract(IERC20)400"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_contract(IERC20)400": {
+        "encoding": "inplace",
+        "label": "contract IERC20",
+        "numberOfBytes": "20"
+      },
+      "t_contract(IRouterClient)233": {
+        "encoding": "inplace",
+        "label": "contract IRouterClient",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_uint64,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_uint64",
+        "label": "mapping(uint64 => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_uint64": {
+        "encoding": "inplace",
+        "label": "uint64",
+        "numberOfBytes": "8"
+      }
+    }
+  }
+}

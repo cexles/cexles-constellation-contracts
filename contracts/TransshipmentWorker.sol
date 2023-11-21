@@ -20,12 +20,16 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator {
     // Event emitted when a message is sent to another chain.
     event MessageSent(
         bytes32 indexed messageId, // The unique ID of the CCIP message.
-        uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
-        address receiver, // The address of the receiver on the destination chain.
-        bytes data, // The data being sent.
-        address token, // The token address that was transferred.
-        uint256 tokenAmount, // The token amount that was transferred.
-        address feeToken, // the token address used to pay CCIP fees.
+        MassageParam massageParam,
+        // uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
+        // address receiver, // The address of the receiver on the destination chain.
+        // bytes dataToSend,
+        // address addressToExecute,
+        // uint256 valueToExecute,
+        // bytes dataToExecute,
+        // address token, // The token address that was transferred.
+        // uint256 tokenAmount, // The token amount that was transferred.
+        // address feeToken, // the token address used to pay CCIP fees.
         uint256 fees // The fees paid for sending the message.
     );
 
@@ -105,18 +109,24 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator {
         allowlistedSenders[_sender] = allowed;
     }
 
-    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
-    /// @param _receiver The address of the recipient on the destination blockchain.
-    /// @param _data The data to be sent.
-    /// @param _token token address.
-    /// @param _amount token amount.
-    /// @param _feeToken Fee token address: native - address(0) or link - _s_link.
-    /// @param _gasLimit Gas limit for destination chain.
+    /// @param destinationChainSelector The identifier (aka selector) for the destination blockchain.
+    /// @param receiver The address of the recipient on the destination blockchain.
+    /// @param dataToSend The data to be sent.
+    /// @param addressToExecute The address of the call on the destination blockchain.
+    /// @param valueToExecute The eth(native token) value to be sent with execution at the destination blockchain.
+    /// @param dataToExecute The data to be executed at the destination blockchain.
+    /// @param token token address.
+    /// @param amount token amount.
+    /// @param feeToken Fee token address: native - address(0) or link - _s_link.
+    /// @param gasLimit Gas limit for destination chain.
     struct MassageParam {
         uint64 destinationChainSelector;
         address receiver;
         bytes dataToSend;
+        address addressToExecute;
+        uint256 valueToExecute;
         bytes dataToExecute;
+        // bytes dataToExecute; // (address, value, data)
         address token;
         uint256 amount;
         address feeToken; // native - address(0) or link - _s_link

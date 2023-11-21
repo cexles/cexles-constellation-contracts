@@ -2,52 +2,34 @@
 pragma solidity 0.8.19;
 
 import {TransshipmentWorker, Client, IRouterClient, IERC20} from "./TransshipmentWorker.sol";
-import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
-import {ITokenAccess} from "./interfaces/ITokenAccess.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract Transshipment is TransshipmentWorker {
-    IERC6551Registry public registry;
     address public accountImplementation;
-    bytes32 public salt;
-    ITokenAccess public tokenContract;
     mapping(address => bool) accounts;
 
     //TODO: Plan:
     // 1. Add received massage validation
-    // 2. Add received massage execution
-    // 3. Add account call Transshipment sendMassage
-    // 4. Validate received massage RootOwner == TargetRootOwner for call from dstAccount
-    // 5. Think about srcAccount -> srcTransshipment ---> dstTransshipment -> dstAccount logic and validations
-    // 6. Account bridge reserves functionality
+    // 2. OK. Add received massage execution
+    // 3. Add account call from Transshipment after received massage
+    // 4. Add account call Transshipment sendMassage
+    // 5. Validate received massage RootOwner == TargetRootOwner for call from dstAccount
+    // 6. Think about srcAccount -> srcTransshipment ---> dstTransshipment -> dstAccount logic and validations
+    // 7. Account bridge reserves functionality
 
     // mapping(address => uint256) public nonces;
 
-    constructor(
-        address _router,
-        address _link,
-        IERC6551Registry _registry,
-        address _accountImplementation,
-        bytes32 _salt,
-        ITokenAccess _tokenContract
-    ) TransshipmentWorker(_router, _link) {
-        registry = _registry;
+    constructor(address _router, address _link, address _accountImplementation) TransshipmentWorker(_router, _link) {
         accountImplementation = _accountImplementation;
-        salt = _salt;
-        tokenContract = _tokenContract;
+    }
+
+    function getAccountAddress(address userAddress) public view returns (address) {
+        bytes32 salt = keccak256(abi.encode(userAddress));
+        return Clones.predictDeterministicAddress(accountImplementation, salt);
     }
 
     function createAccount() external returns (address accountAddress) {
-        // Every one can have only one account! All communicate with help of rootAccount!
-        uint256 tokenId = uint256(keccak256(abi.encodePacked(msg.sender, block.chainid)));
-        bool success = tokenContract.mint(msg.sender, tokenId);
-        require(success, "Account creation failed");
-        accountAddress = registry.createAccount(
-            accountImplementation,
-            salt,
-            block.chainid,
-            address(tokenContract),
-            tokenId
-        );
+        accountAddress = Clones.cloneDeterministic(accountImplementation, keccak256(abi.encode(msg.sender)));
         accounts[accountAddress] = true;
     }
 
@@ -55,6 +37,10 @@ contract Transshipment is TransshipmentWorker {
         for (uint256 i = 0; i < massageParams.length; i++) {
             _sendMessage(massageParams[i]);
         }
+    }
+
+    function sendMassage(MassageParam calldata massageParam) public {
+        _sendMessage(massageParam);
     }
 
     function _sendMessage(
@@ -69,6 +55,7 @@ contract Transshipment is TransshipmentWorker {
             massageParam.feeToken == address(0) || massageParam.feeToken == address(s_linkToken),
             "Wrong fee token address"
         );
+
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
             massageParam.receiver,
@@ -78,11 +65,11 @@ contract Transshipment is TransshipmentWorker {
             massageParam.feeToken,
             massageParam.gasLimit
         );
-        // TODO: EXECUTE when get massage massageParam.dataToExecute
         // Initialize a router client instance to interact with cross-chain router
         IRouterClient router = IRouterClient(this.getRouter());
         // Get the fee required to send the CCIP message
         uint256 fees = router.getFee(massageParam.destinationChainSelector, evm2AnyMessage);
+
         uint256 nativeFees = 0;
         if (address(0) == massageParam.feeToken) {
             if (fees > address(this).balance) revert NotEnoughBalance(address(this).balance, fees);
@@ -96,21 +83,27 @@ contract Transshipment is TransshipmentWorker {
         // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
         IERC20(massageParam.token).approve(address(router), massageParam.amount);
         // Send the message through the router and store the returned message ID
+
         messageId = router.ccipSend{value: nativeFees}(massageParam.destinationChainSelector, evm2AnyMessage);
         // Emit an event with message details
-        emit MessageSent(
-            messageId,
-            massageParam.destinationChainSelector,
-            massageParam.receiver,
-            massageParam.dataToSend,
-            massageParam.token,
-            massageParam.amount,
-            massageParam.feeToken,
-            fees
-        );
+        emit MessageSent(messageId, massageParam, fees);
         // Return the message ID
         return messageId;
     }
+
+    // struct MassageParam {
+    //     uint64 destinationChainSelector;
+    //     address receiver;
+    //     bytes dataToSend;
+    //     address addressToExecute;
+    //     uint256 valueToExecute;
+    //     bytes dataToExecute;
+    //     // bytes dataToExecute; // (address, value, data)
+    //     address token;
+    //     uint256 amount;
+    //     address feeToken; // native - address(0) or link - _s_link
+    //     uint256 gasLimit;
+    // }
 
     function _ccipReceive(
         Client.Any2EVMMessage memory any2EvmMessage
@@ -120,13 +113,28 @@ contract Transshipment is TransshipmentWorker {
         override
         onlyAllowlisted(any2EvmMessage.sourceChainSelector, abi.decode(any2EvmMessage.sender, (address)))
     {
-        // TODO: add check userId with srcChain
+        // TODO: add check userId with srcChain and destinationCaller
+        // TODO: add check addressToExecute != address(this) ?
 
-        s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
-        s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent text
-        // Expect one token to be transferred at once, but you can transfer several tokens.
-        s_lastReceivedTokenAddress = any2EvmMessage.destTokenAmounts[0].token;
-        s_lastReceivedTokenAmount = any2EvmMessage.destTokenAmounts[0].amount;
+        MassageParam memory massageParam = abi.decode(any2EvmMessage.data, (MassageParam));
+        if (!isBytesEmpty(massageParam.dataToExecute)) {
+            bytes memory result = execute(
+                massageParam.addressToExecute,
+                massageParam.valueToExecute,
+                massageParam.dataToExecute
+            );
+        }
+
+        if (!isBytesEmpty(massageParam.dataToSend)) {
+            massageParam = abi.decode(massageParam.dataToSend, (MassageParam));
+            this.sendMassage(massageParam); // convert massageParam to calldata store type
+        }
+
+        // s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
+        // s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent text
+        // // Expect one token to be transferred at once, but you can transfer several tokens.
+        // s_lastReceivedTokenAddress = any2EvmMessage.destTokenAmounts[0].token;
+        // s_lastReceivedTokenAmount = any2EvmMessage.destTokenAmounts[0].amount;
 
         emit MessageReceived(
             any2EvmMessage.messageId,
@@ -139,4 +147,25 @@ contract Transshipment is TransshipmentWorker {
     }
 
     function multicall() external returns (bool) {} // And this contract will be multicallForwarder
+
+    /// fails when call is wrong.
+    error ErrorInCall(bytes result);
+
+    function execute(address target, uint256 value, bytes memory data) public returns (bytes memory result) {
+        // ++state;
+
+        bool success;
+        (success, result) = target.call{value: value}(data);
+
+        if (!success) revert ErrorInCall(result);
+    }
+
+    function isBytesEmpty(bytes memory data) internal pure returns (bool) {
+        for (uint256 i = 0; i < data.length; i++) {
+            if (data[i] != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

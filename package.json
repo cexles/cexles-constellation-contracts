@@ -34,8 +34,7 @@
   },
   "dependencies": {
     "@chainlink/contracts-ccip": "^0.7.6",
-    "@openzeppelin/contracts": "^4.8.0",
-    "contracts": "tokenbound/contracts"
+    "@openzeppelin/contracts": "^4.8.0"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",

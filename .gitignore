@@ -18,6 +18,8 @@ node_modules
 # Package manager
 yarn-error.log
 
+deployments
+
 config/**.*
 !config/custom-environment-variables.json
 !config/example.json

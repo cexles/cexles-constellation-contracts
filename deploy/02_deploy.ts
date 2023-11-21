@@ -4,67 +4,25 @@ import { DEPLOY } from "config";
 import { ZERO_ADDRESS, ZERO_BYTES } from "@test-utils";
 
 const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
-  const { deploy, execute, read } = typedDeployments(deployments);
+  const { deploy, get } = typedDeployments(deployments);
   const { deployer, router, link } = await getNamedAccounts();
 
-  // const SepoliaChainSelector = "16015286601757825753";
-  // const MumbaiChainSelector = "12532609583862916517";
-  // const AvalancheChainSelector = "14767482510784806043";
-  // const BscTestnetChainSelector = "13264668187771770619";
+  const ERC721 = (await get("MOCK_ERC721")).address;
+  // const salt = "0x2cb3e0fc88cb7e9994b65c635b6c44f86364f03f23fec15794eee408e1b164fa";
+  const regisry = "0x000000006551c19487814612e58FE06813775758";
+  const impl = (await get("Account")).address;
 
-  // const contartAtSepolia = "0xADaA518009d3A47f16fa633Bb3650d98094f8110";
-  // const contartAtMumbai = "0xa423ccF8312e6c4B8b3749157FeC825Db1e5FA69";
-  // const contartAtAvalanche = "";
-  // const contartAtBscTestnet = "0xF9eA4C5c035A6127AEB5Ac9B2abaf3fB19aEd6C1";
-
-  // struct MassageParam {
-  //     uint64 destinationChainSelector;
-  //     address receiver;
-  //     bytes dataToSend;
-  //     bytes dataToExecute;
-  //     address token;
-  //     uint256 amount;
-  //     address feeToken;
-  //     uint256 gasLimit;
-  // }
-  // [MumbaiChainSelector, contartAtMumbai, "0x01", "0x0", "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05", link]
-  // ["12532609583862916517","0xa423ccF8312e6c4B8b3749157FeC825Db1e5FA69",0x01,0x0,"0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05","1","0x779877A7B0D9E8603169DdbD7836e478b4624789","200000"]
-  // [["12532609583862916517","0xa423ccF8312e6c4B8b3749157FeC825Db1e5FA69",0x01,0x0,"0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05","1","0x779877A7B0D9E8603169DdbD7836e478b4624789","200000"],["13264668187771770619","0xF9eA4C5c035A6127AEB5Ac9B2abaf3fB19aEd6C1",0x02,0x0,"0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05","2","0x779877A7B0D9E8603169DdbD7836e478b4624789","200000"]]
-
-  // let senders: string[] = [];
-  // let AlowedChains: string[] = [];
-
-  // switch (network.name) {
-  //   case "sepolia":
-  //     AlowedChains = [MumbaiChainSelector, AvalancheChainSelector];
-  //     senders = [contartAtMumbai, contartAtAvalanche];
-  //     break;
-
-  //   case "polygonMumbai":
-  //     AlowedChains = [SepoliaChainSelector, AvalancheChainSelector];
-  //     senders = [contartAtSepolia, contartAtAvalanche];
-  //     break;
-
-  //   case "avalancheFuji":
-  //     AlowedChains = [SepoliaChainSelector, MumbaiChainSelector];
-  //     senders = [contartAtSepolia, contartAtMumbai];
-  //     break;
-
-  //   default:
-  //     break;
-  // }
-
-  // console.log("NETWORK NAME: ", network.name);
-  // console.log("AlowedChains: ", AlowedChains);
-  // console.log("senders: ", senders);
+  // address _router,
+  //       address _link,
+  //       IERC6551Registry _registry,
+  //       address _accountImplementation,
+  //       ITokenAccess _tokenContract
 
   await deploy("Transshipment", {
     from: deployer,
-    args: [router, link, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_BYTES, ZERO_ADDRESS],
+    args: [router, link, regisry, impl, ERC721],
     log: true,
   });
-
-  console.log("Ready \n");
 };
 
 migrate.tags = ["trn"];

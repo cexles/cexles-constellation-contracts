@@ -3,10 +3,21 @@ pragma solidity 0.8.19;
 
 import {TransshipmentWorker, Client, IRouterClient, IERC20} from "./TransshipmentWorker.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {EIP712, ECDSA} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {IAccount} from "./interfaces/IAccount.sol";
+import {ITransshipment} from "./interfaces/ITransshipment.sol";
 
-contract Transshipment is TransshipmentWorker {
+contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
+    string public constant NAME = "Transshipment";
+    string public constant VERSION = "0.0.1";
+
     address public accountImplementation;
+    address public manager;
     mapping(address => bool) accounts;
+
+    mapping(address => uint256) public userNonce;
+
+    event AccountCreated(address userAddress, address accountAddress, string name, uint8 accountType);
 
     //TODO: Plan:
     // 1. Add received massage validation
@@ -19,7 +30,11 @@ contract Transshipment is TransshipmentWorker {
 
     // mapping(address => uint256) public nonces;
 
-    constructor(address _router, address _link, address _accountImplementation) TransshipmentWorker(_router, _link) {
+    constructor(
+        address _router,
+        address _link,
+        address _accountImplementation
+    ) TransshipmentWorker(_router, _link) EIP712(NAME, VERSION) {
         accountImplementation = _accountImplementation;
     }
 
@@ -28,15 +43,53 @@ contract Transshipment is TransshipmentWorker {
         return Clones.predictDeterministicAddress(accountImplementation, salt);
     }
 
-    function createAccount() external returns (address accountAddress) {
+    function createAccount(string memory name, uint8 accountType) external returns (address accountAddress) {
         accountAddress = Clones.cloneDeterministic(accountImplementation, keccak256(abi.encode(msg.sender)));
+        IAccount(accountAddress).initialize(msg.sender, address(this), name, accountType);
         accounts[accountAddress] = true;
+        emit AccountCreated(msg.sender, accountAddress, name, accountType);
     }
 
     function sendUniversalMassage(MassageParam[] calldata massageParams) external {
         for (uint256 i = 0; i < massageParams.length; i++) {
             _sendMessage(massageParams[i]);
         }
+    }
+
+    function bridgeTokens(
+        bytes calldata managerProof,
+        address feeToken,
+        uint256 gasLimit,
+        BridgeParams calldata params
+    ) external payable {
+        require(params.srcChainSelector == block.chainid, "Wrong src chain id");
+        require(accounts[params.dstExecutor], "Wrong executor");
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    keccak256(
+                        "BridgeParams(address userAddress,uint256 userNonce,uint64 srcChainSelector,address srcTokenAddress,uint256 srcTokenAmount,uint64 dstChainSelector,address dstExecutor,address dstTokenAddress,uint256 dstTokenAmount,address dstReceiver)"
+                    ),
+                    msg.sender,
+                    userNonce[msg.sender],
+                    params.srcChainSelector,
+                    params.srcTokenAddress,
+                    params.srcTokenAmount,
+                    params.dstChainSelector,
+                    params.dstExecutor,
+                    params.dstTokenAddress,
+                    params.dstTokenAmount,
+                    params.dstReceiver
+                )
+            )
+        );
+        require(ECDSA.recover(digest, managerProof) == manager, "Manager validation ERROR");
+        uint256 valueToSend = 0;
+        if (params.srcTokenAddress == address(0)) {
+            valueToSend = params.srcTokenAmount - params.dstTokenAmount;
+            require(msg.value == params.srcTokenAmount, "Wrong amount");
+        }
+        IAccount(params.dstExecutor).bridge{value: valueToSend}(params, feeToken, gasLimit);
     }
 
     function sendMassage(MassageParam calldata massageParam) public {
@@ -90,20 +143,6 @@ contract Transshipment is TransshipmentWorker {
         // Return the message ID
         return messageId;
     }
-
-    // struct MassageParam {
-    //     uint64 destinationChainSelector;
-    //     address receiver;
-    //     bytes dataToSend;
-    //     address addressToExecute;
-    //     uint256 valueToExecute;
-    //     bytes dataToExecute;
-    //     // bytes dataToExecute; // (address, value, data)
-    //     address token;
-    //     uint256 amount;
-    //     address feeToken; // native - address(0) or link - _s_link
-    //     uint256 gasLimit;
-    // }
 
     function _ccipReceive(
         Client.Any2EVMMessage memory any2EvmMessage

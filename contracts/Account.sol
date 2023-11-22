@@ -29,26 +29,43 @@ contract Account is IAccount {
         accountType = _accountType;
     }
 
-    function bridge(BridgeParams memory params, address feeToken, uint256 gasLimit) external payable {
+    function bridge(
+        address srcTokenAddress,
+        address dstTokenAddress,
+        uint256 dstTokenAmount,
+        address dstReceiver,
+        uint64 dstChainSelector,
+        address feeToken,
+        uint256 gasLimit
+    ) external payable {
         ITransshipment _transshipment = ITransshipment(transshipment);
         require(msg.sender == address(_transshipment), "ONLY_TRANSSHIPMENT");
         uint256 nativeAmount = 0;
-        if (params.srcTokenAddress == address(0)) {
-            nativeAmount = params.dstTokenAmount;
-            require(msg.value >= params.dstTokenAmount, "Unfair bridge amount"); // src - fee
+        bytes memory dataToCall;
+        if (srcTokenAddress == address(0) || dstTokenAddress == address(0)) {
+            nativeAmount = dstTokenAmount;
+            require(msg.value >= dstTokenAmount, "Unfair bridge amount"); // src - fee\
+            dataToCall = abi.encodeWithSelector(IAccount(address(0)).execute.selector, address(0), nativeAmount, "0x");
+        } else {
+            bytes memory transferData = abi.encodeWithSelector(
+                IERC20(address(0)).transfer.selector,
+                dstReceiver,
+                dstTokenAmount
+            );
+            dataToCall = abi.encodeWithSelector(
+                IAccount(address(0)).execute.selector,
+                dstTokenAddress,
+                0,
+                transferData
+            );
         }
-        bytes memory data = abi.encodeWithSelector(
-            IERC20(address(0)).transfer.selector,
-            params.dstReceiver,
-            params.dstTokenAmount
-        );
         bytes memory dstMassageData = abi.encode(
-            MassageParam(0, address(0), "0x", address(this), nativeAmount, data, address(0), 0, address(0), 0)
+            MassageParam(0, address(0), "0x", address(this), nativeAmount, dataToCall, address(0), 0, address(0), 0)
         );
 
         _transshipment.sendMassage(
             MassageParam(
-                params.dstChainSelector,
+                dstChainSelector,
                 address(_transshipment),
                 dstMassageData,
                 address(0),
@@ -67,6 +84,7 @@ contract Account is IAccount {
         uint256 value,
         bytes calldata data
     ) external payable virtual returns (bytes memory result) {
+        require(msg.sender == owner || msg.sender == transshipment, "Wrong caller");
         ++state;
 
         bool success;

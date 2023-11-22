@@ -6,7 +6,6 @@ interface ITransshipmentStructures {
     struct BridgeParams {
         address userAddress;
         address userNonce;
-        uint64 srcChainSelector;
         address srcTokenAddress;
         uint256 srcTokenAmount;
         uint64 dstChainSelector;

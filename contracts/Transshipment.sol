@@ -6,6 +6,8 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {EIP712, ECDSA} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {IAccount} from "./interfaces/IAccount.sol";
 import {ITransshipment} from "./interfaces/ITransshipment.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 
 contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     string public constant NAME = "Transshipment";
@@ -62,17 +64,15 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         uint256 gasLimit,
         BridgeParams calldata params
     ) external payable {
-        require(params.srcChainSelector == block.chainid, "Wrong src chain id");
         require(accounts[params.dstExecutor], "Wrong executor");
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
                     keccak256(
-                        "BridgeParams(address userAddress,uint256 userNonce,uint64 srcChainSelector,address srcTokenAddress,uint256 srcTokenAmount,uint64 dstChainSelector,address dstExecutor,address dstTokenAddress,uint256 dstTokenAmount,address dstReceiver)"
+                        "BridgeParams(address userAddress,uint256 userNonce,address srcTokenAddress,uint256 srcTokenAmount,uint64 dstChainSelector,address dstExecutor,address dstTokenAddress,uint256 dstTokenAmount,address dstReceiver)"
                     ),
                     msg.sender,
                     userNonce[msg.sender],
-                    params.srcChainSelector,
                     params.srcTokenAddress,
                     params.srcTokenAmount,
                     params.dstChainSelector,
@@ -86,10 +86,21 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         require(ECDSA.recover(digest, managerProof) == manager, "Manager validation ERROR");
         uint256 valueToSend = 0;
         if (params.srcTokenAddress == address(0)) {
-            valueToSend = params.srcTokenAmount - params.dstTokenAmount;
+            // valueToSend = params.srcTokenAmount - params.dstTokenAmount;
             require(msg.value == params.srcTokenAmount, "Wrong amount");
+        } else {
+            // uint256 tokensToSend = params.srcTokenAmount - params.dstTokenAmount;
+            IERC20(params.dstTokenAddress).transferFrom(msg.sender, params.dstExecutor, params.srcTokenAmount);
         }
-        IAccount(params.dstExecutor).bridge{value: valueToSend}(params, feeToken, gasLimit);
+        IAccount(params.dstExecutor).bridge{value: valueToSend}(
+            params.srcTokenAddress,
+            params.dstTokenAddress,
+            params.dstTokenAmount,
+            params.dstReceiver,
+            params.dstChainSelector,
+            feeToken,
+            gasLimit
+        );
     }
 
     function sendMassage(MassageParam calldata massageParam) public {
@@ -134,9 +145,10 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             s_linkToken.approve(address(router), fees);
         }
         // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
-        IERC20(massageParam.token).approve(address(router), massageParam.amount);
+        if (massageParam.token != address(0)) {
+            IERC20(massageParam.token).approve(address(router), massageParam.amount);
+        }
         // Send the message through the router and store the returned message ID
-
         messageId = router.ccipSend{value: nativeFees}(massageParam.destinationChainSelector, evm2AnyMessage);
         // Emit an event with message details
         emit MessageSent(messageId, massageParam, fees);

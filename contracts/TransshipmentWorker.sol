@@ -6,9 +6,10 @@ import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/O
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
+import {ITransshipmentStructures} from "./interfaces/ITransshipmentStructures.sol";
 
 /// @title - A simple messenger contract for transferring/receiving tokens and data across chains.
-abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator {
+abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshipmentStructures {
     // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance to cover the fees.
     error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -109,30 +110,6 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator {
         allowlistedSenders[_sender] = allowed;
     }
 
-    /// @param destinationChainSelector The identifier (aka selector) for the destination blockchain.
-    /// @param receiver The address of the recipient on the destination blockchain.
-    /// @param dataToSend The data to be sent.
-    /// @param addressToExecute The address of the call on the destination blockchain.
-    /// @param valueToExecute The eth(native token) value to be sent with execution at the destination blockchain.
-    /// @param dataToExecute The data to be executed at the destination blockchain.
-    /// @param token token address.
-    /// @param amount token amount.
-    /// @param feeToken Fee token address: native - address(0) or link - _s_link.
-    /// @param gasLimit Gas limit for destination chain.
-    struct MassageParam {
-        uint64 destinationChainSelector;
-        address receiver;
-        bytes dataToSend;
-        address addressToExecute;
-        uint256 valueToExecute;
-        bytes dataToExecute;
-        // bytes dataToExecute; // (address, value, data)
-        address token;
-        uint256 amount;
-        address feeToken; // native - address(0) or link - _s_link
-        uint256 gasLimit;
-    }
-
     /// @notice Sends data and transfer tokens to receiver on the destination chain.
     /// @notice Pay for fees in LINK.
     /// @dev Assumes your contract has sufficient LINK to pay for CCIP fees.
@@ -176,9 +153,15 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator {
         address _feeTokenAddress,
         uint256 _gasLimit
     ) internal pure returns (Client.EVM2AnyMessage memory) {
-        // Set the token amounts
-        Client.EVMTokenAmount[] memory tokenAmounts = new Client.EVMTokenAmount[](1);
-        tokenAmounts[0] = Client.EVMTokenAmount({token: _token, amount: _amount});
+        Client.EVMTokenAmount[] memory tokenAmounts;
+        if (_amount == 0) {
+            tokenAmounts = new Client.EVMTokenAmount[](0);
+        } else {
+            // Set the token amounts
+            tokenAmounts = new Client.EVMTokenAmount[](1);
+            tokenAmounts[0] = Client.EVMTokenAmount({token: _token, amount: _amount});
+        }
+
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         return
             Client.EVM2AnyMessage({
@@ -187,7 +170,7 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator {
                 tokenAmounts: tokenAmounts, // The amount and type of token being transferred
                 extraArgs: Client._argsToBytes(
                     // Additional arguments, setting gas limit and non-strict sequencing mode
-                    Client.EVMExtraArgsV1({gasLimit: _gasLimit, strict: false}) //TODO: get gasLimit
+                    Client.EVMExtraArgsV1({gasLimit: _gasLimit, strict: false})
                 ),
                 // Set the feeToken to a feeTokenAddress, indicating specific asset will be used for fees
                 feeToken: _feeTokenAddress

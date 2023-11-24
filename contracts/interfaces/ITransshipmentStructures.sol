@@ -3,9 +3,18 @@
 pragma solidity 0.8.19;
 
 interface ITransshipmentStructures {
+    /// @param userAddress
+    /// @param userNonce
+    /// @param srcTokenAddress
+    /// @param srcTokenAmount
+    /// @param dstChainSelector
+    /// @param dstExecutor
+    /// @param dstTokenAddress token address.
+    /// @param dstTokenAmount token amount.
+    /// @param dstReceiver
     struct BridgeParams {
         address userAddress;
-        address userNonce;
+        uint256 userNonce;
         address srcTokenAddress;
         uint256 srcTokenAmount;
         uint64 dstChainSelector;

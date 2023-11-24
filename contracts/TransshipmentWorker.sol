@@ -40,8 +40,7 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         uint64 indexed sourceChainSelector, // The chain selector of the source chain.
         address sender, // The address of the sender from the source chain.
         bytes text, // The text that was received.
-        address token, // The token address that was transferred.
-        uint256 tokenAmount // The token amount that was transferred.
+        Client.EVMTokenAmount[] tokenAmounts // The token addresses and amounts a that was transferred.
     );
 
     bytes32 public s_lastReceivedMessageId; // Store the last received messageId.

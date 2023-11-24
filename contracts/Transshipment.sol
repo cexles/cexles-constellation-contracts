@@ -8,8 +8,12 @@ import {IAccount} from "./interfaces/IAccount.sol";
 import {ITransshipment} from "./interfaces/ITransshipment.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+
+import "hardhat/console.sol";
 
 contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
+    // using SignatureChecker for address;
     string public constant NAME = "Transshipment";
     string public constant VERSION = "0.0.1";
 
@@ -35,9 +39,11 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     constructor(
         address _router,
         address _link,
-        address _accountImplementation
+        address _accountImplementation,
+        address _manager
     ) TransshipmentWorker(_router, _link) EIP712(NAME, VERSION) {
         accountImplementation = _accountImplementation;
+        manager = _manager;
     }
 
     function getAccountAddress(address userAddress) public view returns (address) {
@@ -62,6 +68,7 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         bytes calldata managerProof,
         address feeToken,
         uint256 gasLimit,
+        uint256 feeAmount,
         BridgeParams calldata params
     ) external payable {
         require(accounts[params.dstExecutor], "Wrong executor");
@@ -83,15 +90,35 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
                 )
             )
         );
-        require(ECDSA.recover(digest, managerProof) == manager, "Manager validation ERROR");
+
+        require(SignatureChecker.isValidSignatureNow(manager, digest, managerProof), "Manager validation ERROR");
+        // require(ECDSA.recover(digest, managerProof) == manager, "Manager validation ERROR");
+        require(params.srcTokenAmount >= params.dstTokenAmount, "Wrong amount for transfer");
+        // FEES
+        console.log("FEES");
+        uint256 ethFeeAmount = 0;
+        if (address(0) == feeToken) {
+            console.log("eth fee check");
+            if (feeAmount > msg.value) revert NotEnoughBalance(msg.value, feeAmount);
+            ethFeeAmount = feeAmount;
+        } else {
+            s_linkToken.transferFrom(msg.sender, address(this), feeAmount);
+        }
+        // TOKENS
+        console.log("TOKENS");
         uint256 valueToSend = 0;
         if (params.srcTokenAddress == address(0)) {
-            // valueToSend = params.srcTokenAmount - params.dstTokenAmount;
-            require(msg.value == params.srcTokenAmount, "Wrong amount");
+            valueToSend = params.srcTokenAmount;
+            require(msg.value == params.srcTokenAmount + ethFeeAmount, "Wrong amount");
         } else {
             // uint256 tokensToSend = params.srcTokenAmount - params.dstTokenAmount;
-            IERC20(params.dstTokenAddress).transferFrom(msg.sender, params.dstExecutor, params.srcTokenAmount);
+            IERC20(params.srcTokenAddress).transferFrom(msg.sender, params.dstExecutor, params.srcTokenAmount);
         }
+        // EXECUTE
+        console.log("EXECUTE");
+        console.log("valueToSend: ", valueToSend);
+        console.log("params.dstExecutor: ", params.dstExecutor);
+        console.log("feeToken: ", feeToken);
         IAccount(params.dstExecutor).bridge{value: valueToSend}(
             params.srcTokenAddress,
             params.dstTokenAddress,
@@ -103,7 +130,7 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         );
     }
 
-    function sendMassage(MassageParam calldata massageParam) public {
+    function sendMassage(MassageParam calldata massageParam) public payable {
         _sendMessage(massageParam);
     }
 
@@ -115,10 +142,13 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         onlyAllowlistedDestinationChain(massageParam.destinationChainSelector)
         returns (bytes32 messageId)
     {
+        console.log("_sendMessage");
+
         require(
             massageParam.feeToken == address(0) || massageParam.feeToken == address(s_linkToken),
             "Wrong fee token address"
         );
+        console.log("after feeToken token check");
 
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
@@ -129,6 +159,8 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             massageParam.feeToken,
             massageParam.gasLimit
         );
+        console.log("_buildCCIPMessage");
+
         // Initialize a router client instance to interact with cross-chain router
         IRouterClient router = IRouterClient(this.getRouter());
         // Get the fee required to send the CCIP message
@@ -136,16 +168,23 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
 
         uint256 nativeFees = 0;
         if (address(0) == massageParam.feeToken) {
+            console.log("eth");
+
             if (fees > address(this).balance) revert NotEnoughBalance(address(this).balance, fees);
             nativeFees = fees;
         } else {
-            if (fees > s_linkToken.balanceOf(address(this)))
-                revert NotEnoughBalance(s_linkToken.balanceOf(address(this)), fees);
+            if (fees > s_linkToken.balanceOf(address(this))) {
+                console.log("links");
+                s_linkToken.transferFrom(msg.sender, address(this), fees);
+                // revert NotEnoughBalance(s_linkToken.balanceOf(address(this)), fees);
+            }
             // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK
             s_linkToken.approve(address(router), fees);
         }
         // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
         if (massageParam.token != address(0)) {
+            console.log("get tokens for transfer");
+            IERC20(massageParam.token).transferFrom(msg.sender, address(this), massageParam.amount);
             IERC20(massageParam.token).approve(address(router), massageParam.amount);
         }
         // Send the message through the router and store the returned message ID
@@ -166,9 +205,12 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     {
         // TODO: add check userId with srcChain and destinationCaller
         // TODO: add check addressToExecute != address(this) ?
+        console.log("_ccipReceive");
 
         MassageParam memory massageParam = abi.decode(any2EvmMessage.data, (MassageParam));
+        console.log("decode");
         if (!isBytesEmpty(massageParam.dataToExecute)) {
+            console.log("Execute");
             bytes memory result = execute(
                 massageParam.addressToExecute,
                 massageParam.valueToExecute,
@@ -177,23 +219,18 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         }
 
         if (!isBytesEmpty(massageParam.dataToSend)) {
+            console.log("Send");
             massageParam = abi.decode(massageParam.dataToSend, (MassageParam));
             this.sendMassage(massageParam); // convert massageParam to calldata store type
         }
 
-        // s_lastReceivedMessageId = any2EvmMessage.messageId; // fetch the messageId
-        // s_lastReceivedData = any2EvmMessage.data; // abi-decoding of the sent text
-        // // Expect one token to be transferred at once, but you can transfer several tokens.
-        // s_lastReceivedTokenAddress = any2EvmMessage.destTokenAmounts[0].token;
-        // s_lastReceivedTokenAmount = any2EvmMessage.destTokenAmounts[0].amount;
-
+        console.log("emit");
         emit MessageReceived(
             any2EvmMessage.messageId,
             any2EvmMessage.sourceChainSelector, // fetch the source chain identifier (aka selector)
             abi.decode(any2EvmMessage.sender, (address)), // abi-decoding of the sender address,
             any2EvmMessage.data,
-            any2EvmMessage.destTokenAmounts[0].token,
-            any2EvmMessage.destTokenAmounts[0].amount
+            any2EvmMessage.destTokenAmounts
         );
     }
 
@@ -202,7 +239,7 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     /// fails when call is wrong.
     error ErrorInCall(bytes result);
 
-    function execute(address target, uint256 value, bytes memory data) public returns (bytes memory result) {
+    function execute(address target, uint256 value, bytes memory data) internal returns (bytes memory result) {
         // ++state;
 
         bool success;

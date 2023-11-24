@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {ITransshipment} from "./interfaces/ITransshipment.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAccount} from "./interfaces/IAccount.sol";
+import "hardhat/console.sol";
 
 contract Account is IAccount {
     address public transshipment;
@@ -45,8 +46,9 @@ contract Account is IAccount {
         if (srcTokenAddress == address(0) || dstTokenAddress == address(0)) {
             nativeAmount = dstTokenAmount;
             require(msg.value >= dstTokenAmount, "Unfair bridge amount"); // src - fee\
-            dataToCall = abi.encodeWithSelector(IAccount(address(0)).execute.selector, address(0), nativeAmount, "0x");
+            dataToCall = abi.encodeWithSelector(IAccount(address(0)).execute.selector, dstReceiver, nativeAmount, "0x");
         } else {
+            require(IERC20(srcTokenAddress).balanceOf(address(this)) >= dstTokenAmount, "Unfair bridge amount"); // src - fee
             bytes memory transferData = abi.encodeWithSelector(
                 IERC20(address(0)).transfer.selector,
                 dstReceiver,
@@ -60,7 +62,7 @@ contract Account is IAccount {
             );
         }
         bytes memory dstMassageData = abi.encode(
-            MassageParam(0, address(0), "0x", address(this), nativeAmount, dataToCall, address(0), 0, address(0), 0)
+            MassageParam(0, address(0), "", address(this), nativeAmount, dataToCall, address(0), 0, address(0), 0)
         );
 
         _transshipment.sendMassage(
@@ -86,7 +88,7 @@ contract Account is IAccount {
     ) external payable virtual returns (bytes memory result) {
         require(msg.sender == owner || msg.sender == transshipment, "Wrong caller");
         ++state;
-
+        console.log("account execute: ", state);
         bool success;
         (success, result) = to.call{value: value}(data);
 
@@ -95,5 +97,6 @@ contract Account is IAccount {
                 revert(add(result, 32), mload(result))
             }
         }
+        console.log("account execute: ", state, " finished");
     }
 }

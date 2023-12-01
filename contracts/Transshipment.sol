@@ -19,7 +19,7 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
 
     address public accountImplementation;
     address public manager;
-    mapping(address => bool) accounts;
+    mapping(address => bool) public accounts;
 
     mapping(address => uint256) public userNonce;
 
@@ -28,11 +28,11 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     //TODO: Plan:
     // 1. Add received massage validation
     // 2. OK. Add received massage execution
-    // 3. Add account call from Transshipment after received massage
-    // 4. Add account call Transshipment sendMassage
+    // 3. OK. Add account call from Transshipment after received massage
+    // 4. OK. Add account call Transshipment sendMassage
     // 5. Validate received massage RootOwner == TargetRootOwner for call from dstAccount
     // 6. Think about srcAccount -> srcTransshipment ---> dstTransshipment -> dstAccount logic and validations
-    // 7. Account bridge reserves functionality
+    // 7. OK. Account bridge reserves functionality
 
     // mapping(address => uint256) public nonces;
 
@@ -44,6 +44,11 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     ) TransshipmentWorker(_router, _link) EIP712(NAME, VERSION) {
         accountImplementation = _accountImplementation;
         manager = _manager;
+    }
+
+    function getCreatedAccountAddress(address userAddress) public view returns (address) {
+        address accountAddress = getAccountAddress(userAddress);
+        return accounts[accountAddress] ? accountAddress : address(0);
     }
 
     function getAccountAddress(address userAddress) public view returns (address) {

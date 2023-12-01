@@ -9,7 +9,7 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts }) => {
 
   await deploy("Transshipment", {
     from: deployer,
-    args: [router, link, impl],
+    args: [router, link, impl, deployer],
     log: true,
   });
 };

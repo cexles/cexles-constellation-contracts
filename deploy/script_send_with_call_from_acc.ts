@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { typedDeployments } from "@utils";
 import { ZERO_ADDRESS, ZERO_BYTES } from "@test-utils";
 import { ContractInterface, ethers } from "ethers";
-import * as TestUSDCArtifact from "../artifacts/contracts/mock/TestUSDC.sol/TestUSDC.json";
+import * as MockERC20Artifact from "../artifacts/contracts/mock/MockERC20.sol/MockERC20.json";
 import * as TransshipmentArtifact from "../artifacts/contracts/Transshipment.sol/Transshipment.json";
 import * as AccountArtifact from "../artifacts/contracts/Account.sol/Account.json";
 
@@ -61,7 +61,7 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network 
   const { deployer, router, link } = await getNamedAccounts();
 
   const Transshipment = await get("Transshipment");
-  // const USDC_ADDRESS = await get("TestUSDC");
+  // const USDC_ADDRESS = await get("MockERC20");
 
   const Trannsshipmetn_Mumbai = "0x78486e1A98B491d04843fcb660396e2669211C2B";
   const Trannsshipmetn_BSC = "0x973eb82B75Be09B901Dd8295f4105b3141032fDd";
@@ -82,7 +82,7 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network 
   };
 
   // Create a new Contract instance
-  const ERC20 = new ethers.Contract(deployer, TestUSDCArtifact.abi as ContractInterface); // FAKE contract
+  const ERC20 = new ethers.Contract(deployer, MockERC20Artifact.abi as ContractInterface); // FAKE contract
   const TransshipmentContract = new ethers.Contract(
     Trannsshipmetn_Mumbai,
     TransshipmentArtifact.abi as ContractInterface

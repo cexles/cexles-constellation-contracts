@@ -7,7 +7,7 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network 
   const { deploy } = typedDeployments(deployments);
   const { deployer } = await getNamedAccounts();
 
-  await deploy("TestUSDC", {
+  await deploy("MockERC20", {
     from: deployer,
     args: [],
     log: true,

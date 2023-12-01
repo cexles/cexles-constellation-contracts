@@ -57,7 +57,7 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network 
   const { deployer, router, link } = await getNamedAccounts();
 
   const Transshipment = await get("Transshipment");
-  // const USDC_ADDRESS = await get("TestUSDC");
+  // const USDC_ADDRESS = await get("MockERC20");
 
   const Trannsshipmetn_Mumbai = "0x7701CA415AbAc388479F818c783cB363D072b8F1";
   const Trannsshipmetn_BSC = "0xeB95b785c6FfA1d459F54981C9f2908155aa002e";

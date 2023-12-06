@@ -17,14 +17,9 @@ import { ITransshipmentStructures } from "@contracts/Transshipment";
 import { ParamType } from "@ethersproject/abi";
 
 describe("Method: sendMassage: ", () => {
-  describe("When one of parameters is incorrect", () => {
-    it("When try check", () => {
-      expect(true);
-    });
-  });
+  let result: ContractTransaction;
 
   describe("When all parameters correct ", () => {
-    let result: ContractTransaction;
 
     it("should success send tokens from EOA (fee in token)", async () => {
       const { link, srcUSDC, transshipmentSender, transshipmentReceiver, user } = await loadFixture(

@@ -56,6 +56,8 @@ describe("Method: sendUniversalMassage: ", () => {
       await expect(result).to.be.not.reverted;
       console.log(await srcUSDC.balanceOf(transshipmentReceiver.address));
       console.log(await srcUSDC.balanceOf(user.address));
+
+      console.log("getLastReceivedMessageDetails", await transshipmentSender.getLastReceivedMessageDetails());
     });
   });
 });

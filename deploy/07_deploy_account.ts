@@ -7,6 +7,7 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts }) => {
 
   await deploy("Account", {
     from: deployer,
+    deterministicDeployment: true,
     args: [],
     log: true,
   });

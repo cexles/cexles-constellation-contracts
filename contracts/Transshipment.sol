@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {TransshipmentWorker, Client, IRouterClient, IERC20} from "./TransshipmentWorker.sol";
+import {TransshipmentWorker, Client, IRouterClient, IERC20, SafeERC20} from "./TransshipmentWorker.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {EIP712, ECDSA} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {IAccount} from "./interfaces/IAccount.sol";
@@ -13,14 +13,15 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 import "hardhat/console.sol";
 
 contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
-    // using SignatureChecker for address;
+    using SafeERC20 for IERC20;
+
+    using SignatureChecker for address;
     string public constant NAME = "Transshipment";
     string public constant VERSION = "0.0.1";
 
     address public accountImplementation;
     address public manager;
     mapping(address => bool) public accounts;
-
     mapping(address => uint256) public userNonce;
 
     event AccountCreated(address userAddress, address accountAddress, string name, uint8 accountType);
@@ -33,8 +34,6 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     // 5. Validate received massage RootOwner == TargetRootOwner for call from dstAccount
     // 6. Think about srcAccount -> srcTransshipment ---> dstTransshipment -> dstAccount logic and validations
     // 7. OK. Account bridge reserves functionality
-
-    // mapping(address => uint256) public nonces;
 
     constructor(
         address _router,
@@ -65,7 +64,7 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
 
     function sendUniversalMassage(MassageParam[] calldata massageParams) external {
         for (uint256 i = 0; i < massageParams.length; i++) {
-            _sendMessage(massageParams[i]);
+            _sendMessage(massageParams[i], msg.sender);
         }
     }
 
@@ -95,11 +94,8 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
                 )
             )
         );
-
-        require(SignatureChecker.isValidSignatureNow(manager, digest, managerProof), "Manager validation ERROR");
-        // require(ECDSA.recover(digest, managerProof) == manager, "Manager validation ERROR");
+        require(manager.isValidSignatureNow(digest, managerProof), "Manager validation ERROR");
         require(params.srcTokenAmount >= params.dstTokenAmount, "Wrong amount for transfer");
-        // FEES
         console.log("FEES");
         uint256 ethFeeAmount = 0;
         if (address(0) == feeToken) {
@@ -107,9 +103,11 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             if (feeAmount > msg.value) revert NotEnoughBalance(msg.value, feeAmount);
             ethFeeAmount = feeAmount;
         } else {
-            s_linkToken.transferFrom(msg.sender, address(this), feeAmount);
+            console.log("address", address(this));
+            console.log("address", feeAmount);
+
+            s_linkToken.safeTransferFrom(msg.sender, address(this), feeAmount);
         }
-        // TOKENS
         console.log("TOKENS");
         uint256 valueToSend = 0;
         if (params.srcTokenAddress == address(0)) {
@@ -117,9 +115,8 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             require(msg.value == params.srcTokenAmount + ethFeeAmount, "Wrong amount");
         } else {
             // uint256 tokensToSend = params.srcTokenAmount - params.dstTokenAmount;
-            IERC20(params.srcTokenAddress).transferFrom(msg.sender, params.dstExecutor, params.srcTokenAmount);
+            IERC20(params.srcTokenAddress).safeTransferFrom(msg.sender, params.dstExecutor, params.srcTokenAmount);
         }
-        // EXECUTE
         console.log("EXECUTE");
         console.log("valueToSend: ", valueToSend);
         console.log("params.dstExecutor: ", params.dstExecutor);
@@ -136,11 +133,17 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     }
 
     function sendMassage(MassageParam calldata massageParam) public payable {
-        _sendMessage(massageParam);
+        _sendMessage(massageParam, msg.sender);
+    }
+
+    function systemSendMassage(MassageParam calldata massageParam, address senderAddress) public payable {
+        require(msg.sender == address(this), "Only system calls");
+        _sendMessage(massageParam, senderAddress);
     }
 
     function _sendMessage(
-        MassageParam calldata massageParam
+        MassageParam calldata massageParam,
+        address senderAddress
     )
         internal
         override
@@ -148,29 +151,23 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         returns (bytes32 messageId)
     {
         console.log("_sendMessage");
-
         require(
             massageParam.feeToken == address(0) || massageParam.feeToken == address(s_linkToken),
             "Wrong fee token address"
         );
         console.log("after feeToken token check");
-
-        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
+        bytes memory dataToSend = appendAddressToData(senderAddress, massageParam.dataToSend);
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
             massageParam.receiver,
-            massageParam.dataToSend,
+            dataToSend,
             massageParam.token,
             massageParam.amount,
             massageParam.feeToken,
             massageParam.gasLimit
         );
         console.log("_buildCCIPMessage");
-
-        // Initialize a router client instance to interact with cross-chain router
         IRouterClient router = IRouterClient(this.getRouter());
-        // Get the fee required to send the CCIP message
         uint256 fees = router.getFee(massageParam.destinationChainSelector, evm2AnyMessage);
-
         uint256 nativeFees = 0;
         if (address(0) == massageParam.feeToken) {
             console.log("eth");
@@ -180,23 +177,17 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         } else {
             if (fees > s_linkToken.balanceOf(address(this))) {
                 console.log("links");
-                s_linkToken.transferFrom(msg.sender, address(this), fees);
-                // revert NotEnoughBalance(s_linkToken.balanceOf(address(this)), fees);
+                s_linkToken.safeTransferFrom(msg.sender, address(this), fees);
             }
-            // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK
-            s_linkToken.approve(address(router), fees);
+            s_linkToken.safeApprove(address(router), fees);
         }
-        // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
         if (massageParam.token != address(0)) {
             console.log("get tokens for transfer");
-            IERC20(massageParam.token).transferFrom(msg.sender, address(this), massageParam.amount);
-            IERC20(massageParam.token).approve(address(router), massageParam.amount);
+            IERC20(massageParam.token).safeTransferFrom(msg.sender, address(this), massageParam.amount);
+            IERC20(massageParam.token).safeApprove(address(router), massageParam.amount);
         }
-        // Send the message through the router and store the returned message ID
         messageId = router.ccipSend{value: nativeFees}(massageParam.destinationChainSelector, evm2AnyMessage);
-        // Emit an event with message details
         emit MessageSent(messageId, massageParam, fees);
-        // Return the message ID
         return messageId;
     }
 
@@ -208,57 +199,34 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         override
         onlyAllowlisted(any2EvmMessage.sourceChainSelector, abi.decode(any2EvmMessage.sender, (address)))
     {
-        // TODO: add check userId with srcChain and destinationCaller
-        // TODO: add check addressToExecute != address(this) ?
         console.log("_ccipReceive");
-
-        MassageParam memory massageParam = abi.decode(any2EvmMessage.data, (MassageParam));
+        (address initiatorAddress, bytes memory massageParamData) = extractAddressFromData(any2EvmMessage.data);
+        MassageParam memory massageParam = abi.decode(massageParamData, (MassageParam));
         console.log("decode");
         if (!isBytesEmpty(massageParam.dataToExecute)) {
             console.log("Execute");
+            if (accounts[massageParam.addressToExecute])
+                require(massageParam.addressToExecute == initiatorAddress, "Wrong request for execution");
             bytes memory result = execute(
-                massageParam.addressToExecute,
-                massageParam.valueToExecute,
-                massageParam.dataToExecute
+                CallData({
+                    target: massageParam.addressToExecute,
+                    value: massageParam.valueToExecute,
+                    data: massageParam.dataToExecute
+                })
             );
         }
-
         if (!isBytesEmpty(massageParam.dataToSend)) {
             console.log("Send");
             massageParam = abi.decode(massageParam.dataToSend, (MassageParam));
-            this.sendMassage(massageParam); // convert massageParam to calldata store type
+            this.systemSendMassage(massageParam, initiatorAddress); // convert massageParam to calldata store type
         }
-
         console.log("emit");
         emit MessageReceived(
             any2EvmMessage.messageId,
-            any2EvmMessage.sourceChainSelector, // fetch the source chain identifier (aka selector)
-            abi.decode(any2EvmMessage.sender, (address)), // abi-decoding of the sender address,
+            any2EvmMessage.sourceChainSelector,
+            abi.decode(any2EvmMessage.sender, (address)),
             any2EvmMessage.data,
             any2EvmMessage.destTokenAmounts
         );
-    }
-
-    function multicall() external returns (bool) {} // And this contract will be multicallForwarder
-
-    /// fails when call is wrong.
-    error ErrorInCall(bytes result);
-
-    function execute(address target, uint256 value, bytes memory data) internal returns (bytes memory result) {
-        // ++state;
-
-        bool success;
-        (success, result) = target.call{value: value}(data);
-
-        if (!success) revert ErrorInCall(result);
-    }
-
-    function isBytesEmpty(bytes memory data) internal pure returns (bool) {
-        for (uint256 i = 0; i < data.length; i++) {
-            if (data[i] != 0) {
-                return false;
-            }
-        }
-        return true;
     }
 }

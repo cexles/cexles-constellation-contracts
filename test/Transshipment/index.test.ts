@@ -6,4 +6,5 @@ describe("Transshipment: ", () => {
   require("./withdraw.test");
   require("./setAndGet.test");
   require("./negative.test");
+  require("./bridgeTokens.test");
 });

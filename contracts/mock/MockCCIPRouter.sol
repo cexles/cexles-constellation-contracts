@@ -52,7 +52,7 @@ contract MockCCIPRouter {
                 Client.Any2EVMMessage(
                     _messageId,
                     srcChainSelector,
-                    abi.encode(msg.sender),
+                    abi.encode(address(receiver)),
                     message.data,
                     message.tokenAmounts
                 )

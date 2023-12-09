@@ -5,11 +5,15 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
-import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
+import {SafeERC20, IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/utils/SafeERC20.sol";
 import {ITransshipmentStructures} from "./interfaces/ITransshipmentStructures.sol";
+import {EnumerableMap} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/utils/structs/EnumerableMap.sol";
 
 /// @title - A simple messenger contract for transferring/receiving tokens and data across chains.
 abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshipmentStructures {
+    using EnumerableMap for EnumerableMap.Bytes32ToUintMap;
+    using SafeERC20 for IERC20;
+
     // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance to cover the fees.
     error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
@@ -17,6 +21,11 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     error DestinationChainNotAllowed(uint64 destinationChainSelector); // Used when the destination chain has not been allowlisted by the contract owner.
     error SourceChainNotAllowed(uint64 sourceChainSelector); // Used when the source chain has not been allowlisted by the contract owner.
     error SenderNotAllowed(address sender); // Used when the sender has not been allowlisted by the contract owner.
+    error OnlySelf(); // Used when a function is called outside of the contract itself.
+    error ErrorCase(); // Used when simulating a revert during message processing.
+    event MessageFailed(bytes32 indexed messageId, bytes reason);
+    event MessageRecovered(bytes32 indexed messageId);
+    error MessageNotFailed(bytes32 messageId);
 
     // Event emitted when a message is sent to another chain.
     event MessageSent(
@@ -43,6 +52,8 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         Client.EVMTokenAmount[] tokenAmounts // The token addresses and amounts a that was transferred.
     );
 
+    event MessageSucceeds(bytes32 messageId);
+
     bytes32 public s_lastReceivedMessageId; // Store the last received messageId.
     address public s_lastReceivedTokenAddress; // Store the last received token address.
     uint256 public s_lastReceivedTokenAmount; // Store the last received amount.
@@ -57,13 +68,32 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     // Mapping to keep track of allowlisted senders.
     mapping(address => bool) public allowlistedSenders;
 
+    // The message contents of failed messages are stored here.
+    mapping(bytes32 messageId => Client.Any2EVMMessage contents) public s_messageContents;
+
+    // Contains failed messages and their state.
+    EnumerableMap.Bytes32ToUintMap internal s_failedMessages;
+
     IERC20 internal s_linkToken;
+
+    // Example error code, could have many different error codes.
+    enum ErrorCode {
+        RESOLVED,
+        BASIC
+    }
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
     /// @param _link The address of the link contract.
     constructor(address _router, address _link) CCIPReceiver(_router) {
         s_linkToken = IERC20(_link);
+    }
+
+    /// @dev Modifier to allow only the contract itself to execute a function.
+    /// Throws an exception if called by any account other than the contract itself.
+    modifier onlySelf() {
+        if (msg.sender != address(this)) revert OnlySelf();
+        _;
     }
 
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
@@ -132,6 +162,71 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         return (s_lastReceivedMessageId, s_lastReceivedData, s_lastReceivedTokenAddress, s_lastReceivedTokenAmount);
     }
 
+    /// @notice The entrypoint for the CCIP router to call. This function should
+    /// never revert, all errors should be handled internally in this contract.
+    /// @param any2EvmMessage The message to process.
+    /// @dev Extremely important to ensure only router calls this.
+    function ccipReceive(
+        Client.Any2EVMMessage calldata any2EvmMessage
+    )
+        external
+        override
+        onlyRouter
+        onlyAllowlisted(any2EvmMessage.sourceChainSelector, abi.decode(any2EvmMessage.sender, (address)))
+    {
+        try this.processMessage(any2EvmMessage) {
+            emit MessageSucceeds(any2EvmMessage.messageId);
+        } catch (bytes memory err) {
+            s_failedMessages.set(any2EvmMessage.messageId, uint256(ErrorCode.BASIC));
+            s_messageContents[any2EvmMessage.messageId] = any2EvmMessage;
+            emit MessageFailed(any2EvmMessage.messageId, err);
+            return;
+        }
+    }
+
+    /**
+     * @notice Retrieves the IDs of failed messages from the `s_failedMessages` map.
+     * @dev Iterates over the `s_failedMessages` map, collecting all keys.
+     * @return ids An array of bytes32 containing the IDs of failed messages from the `s_failedMessages` map.
+     */
+    function getFailedMessagesIds() external view returns (bytes32[] memory ids) {
+        uint256 length = s_failedMessages.length();
+        bytes32[] memory allKeys = new bytes32[](length);
+        for (uint256 i = 0; i < length; i++) {
+            (bytes32 key, ) = s_failedMessages.at(i);
+            allKeys[i] = key;
+        }
+        return allKeys;
+    }
+
+    /// @notice Serves as the entry point for this contract to process incoming messages.
+    /// @param any2EvmMessage Received CCIP message.
+    /// @dev Transfers specified token amounts to the owner of this contract. This function
+    /// must be external because of the  try/catch for error handling.
+    /// It uses the `onlySelf`: can only be called from the contract.
+    function processMessage(
+        Client.Any2EVMMessage calldata any2EvmMessage
+    )
+        external
+        onlySelf
+        onlyAllowlisted(any2EvmMessage.sourceChainSelector, abi.decode(any2EvmMessage.sender, (address)))
+    {
+        _ccipReceive(any2EvmMessage); // process the message - may revert as well
+    }
+
+    /// @notice Allows the owner to retry a failed message in order to unblock the associated tokens.
+    /// @param messageId The unique identifier of the failed message.
+    /// @param tokenReceiver The address to which the tokens will be sent.
+    /// @dev This function is only callable by the contract owner. It changes the status of the message
+    /// from 'failed' to 'resolved' to prevent reentry and multiple retries of the same message.
+    function retryFailedMessage(bytes32 messageId, address tokenReceiver) external onlyOwner {
+        if (s_failedMessages.get(messageId) != uint256(ErrorCode.BASIC)) revert MessageNotFailed(messageId);
+        s_failedMessages.set(messageId, uint256(ErrorCode.RESOLVED));
+        Client.Any2EVMMessage memory message = s_messageContents[messageId];
+        IERC20(message.destTokenAmounts[0].token).safeTransfer(tokenReceiver, message.destTokenAmounts[0].amount);
+        emit MessageRecovered(messageId);
+    }
+
     /// handle a received message
     function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal virtual override;
 
@@ -156,22 +251,15 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         if (_amount == 0) {
             tokenAmounts = new Client.EVMTokenAmount[](0);
         } else {
-            // Set the token amounts
             tokenAmounts = new Client.EVMTokenAmount[](1);
             tokenAmounts[0] = Client.EVMTokenAmount({token: _token, amount: _amount});
         }
-
-        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         return
             Client.EVM2AnyMessage({
-                receiver: abi.encode(_receiver), // ABI-encoded receiver address
+                receiver: abi.encode(_receiver),
                 data: _data,
-                tokenAmounts: tokenAmounts, // The amount and type of token being transferred
-                extraArgs: Client._argsToBytes(
-                    // Additional arguments, setting gas limit and non-strict sequencing mode
-                    Client.EVMExtraArgsV1({gasLimit: _gasLimit, strict: false})
-                ),
-                // Set the feeToken to a feeTokenAddress, indicating specific asset will be used for fees
+                tokenAmounts: tokenAmounts,
+                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: _gasLimit, strict: false})),
                 feeToken: _feeTokenAddress
             });
     }
@@ -187,16 +275,9 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @param _beneficiary The address to which the Ether should be sent.
     // TODO: remove method
     function withdraw(address _beneficiary) public onlyOwner {
-        // Retrieve the balance of this contract
         uint256 amount = address(this).balance;
-
-        // Revert if there is nothing to withdraw
         if (amount == 0) revert NothingToWithdraw();
-
-        // Attempt to send the funds, capturing the success status and discarding any return data
         (bool sent, ) = _beneficiary.call{value: amount}("");
-
-        // Revert if the send failed, with information about the attempted transfer
         if (!sent) revert FailedToWithdrawEth(msg.sender, _beneficiary, amount);
     }
 
@@ -206,12 +287,8 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @param _token The contract address of the ERC20 token to be withdrawn.
     // TODO: remove method
     function withdrawToken(address _beneficiary, address _token) public onlyOwner {
-        // Retrieve the balance of this contract
         uint256 amount = IERC20(_token).balanceOf(address(this));
-
-        // Revert if there is nothing to withdraw
         if (amount == 0) revert NothingToWithdraw();
-
-        IERC20(_token).transfer(_beneficiary, amount);
+        IERC20(_token).safeTransfer(_beneficiary, amount);
     }
 }

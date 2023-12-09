@@ -8,24 +8,6 @@ import { sign, Domain, typesForBridge, ZERO_ADDRESS, ZERO_BYTES, BridgeParamsStr
 import { ITransshipmentStructures } from "@contracts/Transshipment";
 import { ParamType } from "@ethersproject/abi";
 
-import { expect } from "chai";
-import { BigNumber, ContractTransaction } from "ethers";
-import { ethers, getChainId } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import {
-  sign,
-  Domain,
-  typesForBridge,
-  ZERO_ADDRESS,
-  ZERO_BYTES,
-  standardPrepare,
-  MassageParamStructAbi,
-  BridgeParamsStruct,
-} from "@test-utils";
-import { ITransshipmentStructures } from "@contracts/Transshipment";
-import { ParamType } from "@ethersproject/abi";
-
 const MassageParamStructAbi = [
   {
     components: [
@@ -135,7 +117,7 @@ describe("Method: safeMint: ", () => {
     });
   });
 
-  describe("When all parameters correct ", () => {
+  describe.only("When all parameters correct ", () => {
     // let user: SignerWithAddress, manager: SignerWithAddress;
     // let srcUSDC: MockERC20;
     // let dstUSDC: MockERC20;
@@ -175,23 +157,29 @@ describe("Method: safeMint: ", () => {
 
       await expect(result).to.be.not.reverted;
     });
-    it("should success send tokens from EOA", async () => {
-      const { link, srcUSDC, transshipmentSender, transshipmentReceiver, user } = await loadFixture(
-        prepareEnvironment
-      );
 
-      const massageParam: ITransshipmentStructures.MassageParamStruct = {
-        destinationChainSelector: 2,
-        receiver: transshipmentReceiver.address, // address at bsc
-        dataToSend: ZERO_BYTES,
-        addressToExecute: ZERO_ADDRESS,
-        valueToExecute: 0,
-        dataToExecute: ZERO_BYTES,
-        token: srcUSDC.address,
-        amount: 100,
-        feeToken: link.address,
-        gasLimit: 200000,
-      };
+    it("should success send massage from account to account for transfer tokens", async () => {
+      const {
+        link,
+        srcUSDC,
+        dstUSDC,
+        router,
+        transshipmentSender,
+        transshipmentReceiver,
+        manager,
+        user,
+        deployer,
+        srcDomain,
+      } = await loadFixture(prepareEnvironment);
+
+      await transshipmentSender.connect(deployer).allowlistSender(transshipmentReceiver.address, true);
+      await transshipmentReceiver.connect(deployer).allowlistSender(transshipmentSender.address, true);
+
+      console.log("transshipmentSender: ", transshipmentSender.address);
+      console.log("transshipmentReceiver: ", transshipmentReceiver.address);
+
+      const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
+      const userDstAccountAddress = await transshipmentReceiver.getAccountAddress(user.address);
 
       await link.connect(user).mint(user.address, ethers.utils.parseUnits("100", 18));
       await link.connect(user).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
@@ -199,98 +187,65 @@ describe("Method: safeMint: ", () => {
       await srcUSDC.connect(user).mint(user.address, ethers.utils.parseUnits("100", 18));
       await srcUSDC.connect(user).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
-      result = await transshipmentSender.connect(user).sendMassage(massageParam);
+      await transshipmentSender.connect(user).createAccount("name", 1);
+      const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
+
+      await transshipmentReceiver.connect(user).createAccount("name", 1);
+      const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
+      await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
+
+      const encodedTransfer = dstUSDC.interface.encodeFunctionData("transfer", [manager.address, 100]);
+      const encodedData = userDstAccount.interface.encodeFunctionData("execute", [
+        dstUSDC.address,
+        0,
+        encodedTransfer,
+      ]);
+
+      const dstMassageParam: ITransshipmentStructures.MassageParamStruct = {
+        destinationChainSelector: 0,
+        receiver: ZERO_ADDRESS,
+        dataToSend: ZERO_BYTES,
+        addressToExecute: userDstAccount.address,
+        valueToExecute: 0,
+        dataToExecute: encodedData,
+        token: ZERO_ADDRESS,
+        amount: 0,
+        feeToken: ZERO_ADDRESS,
+        gasLimit: 0,
+      };
+
+      const encodedDstMassageParam = ethers.utils.defaultAbiCoder.encode(
+        MassageParamStructAbi as ParamType[],
+        [dstMassageParam]
+      );
+
+      const massageParam: ITransshipmentStructures.MassageParamStruct = {
+        destinationChainSelector: "2",
+        receiver: transshipmentReceiver.address,
+        dataToSend: encodedDstMassageParam,
+        addressToExecute: ZERO_ADDRESS,
+        valueToExecute: 0,
+        dataToExecute: ZERO_BYTES,
+        token: ZERO_ADDRESS,
+        amount: 0,
+        feeToken: ZERO_ADDRESS,
+        gasLimit: 200000,
+      };
+
+      const fees = ethers.utils.parseUnits("1", 18);
+
+      const encodedTransshipmentCallData = transshipmentReceiver.interface.encodeFunctionData("sendMassage", [
+        massageParam,
+      ]);
+
+      result = await userSrcAccount
+        .connect(user)
+        .execute(transshipmentSender.address, fees, encodedTransshipmentCallData, { value: fees });
+
+      console.log(await dstUSDC.balanceOf(userDstAccount.address));
 
       await expect(result).to.be.not.reverted;
     });
-    // it("should success send massage from account to account for transfer tokens", async () => {
-    //   const {
-    //     link,
-    //     srcUSDC,
-    //     dstUSDC,
-    //     router,
-    //     transshipmentSender,
-    //     transshipmentReceiver,
-    //     manager,
-    //     user,
-    //     deployer,
-    //     srcDomain,
-    //   } = await loadFixture(prepareEnvironment);
-
-    //   await transshipmentSender.connect(deployer).allowlistSender(transshipmentReceiver.address, true);
-    //   await transshipmentReceiver.connect(deployer).allowlistSender(transshipmentSender.address, true);
-
-    //   console.log("transshipmentSender: ", transshipmentSender.address);
-    //   console.log("transshipmentReceiver: ", transshipmentReceiver.address);
-
-    //   const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
-    //   const userDstAccountAddress = await transshipmentReceiver.getAccountAddress(user.address);
-
-    //   await link.connect(user).mint(user.address, ethers.utils.parseUnits("100", 18));
-    //   await link.connect(user).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
-
-    //   await srcUSDC.connect(user).mint(user.address, ethers.utils.parseUnits("100", 18));
-    //   await srcUSDC.connect(user).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
-
-    //   await transshipmentSender.connect(user).createAccount("name", 1);
-    //   const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
-
-    //   await transshipmentReceiver.connect(user).createAccount("name", 1);
-    //   const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
-    //   await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
-
-    //   const encodedTransfer = dstUSDC.interface.encodeFunctionData("transfer", [manager.address, 100]);
-    //   const encodedData = userDstAccount.interface.encodeFunctionData("execute", [
-    //     dstUSDC.address,
-    //     0,
-    //     encodedTransfer,
-    //   ]);
-
-    //   const dstMassageParam: ITransshipmentStructures.MassageParamStruct = {
-    //     destinationChainSelector: 0,
-    //     receiver: ZERO_ADDRESS,
-    //     dataToSend: ZERO_BYTES,
-    //     addressToExecute: userDstAccount.address,
-    //     valueToExecute: 0,
-    //     dataToExecute: encodedData,
-    //     token: ZERO_ADDRESS,
-    //     amount: 0,
-    //     feeToken: ZERO_ADDRESS,
-    //     gasLimit: 0,
-    //   };
-
-    //   const encodedDstMassageParam = ethers.utils.defaultAbiCoder.encode(
-    //     MassageParamStructAbi as ParamType[],
-    //     [dstMassageParam]
-    //   );
-
-    //   const massageParam: ITransshipmentStructures.MassageParamStruct = {
-    //     destinationChainSelector: "2",
-    //     receiver: transshipmentReceiver.address,
-    //     dataToSend: encodedDstMassageParam,
-    //     addressToExecute: ZERO_ADDRESS,
-    //     valueToExecute: 0,
-    //     dataToExecute: ZERO_BYTES,
-    //     token: ZERO_ADDRESS,
-    //     amount: 0,
-    //     feeToken: ZERO_ADDRESS,
-    //     gasLimit: 200000,
-    //   };
-
-    //   const fees = ethers.utils.parseUnits("1", 18);
-
-    //   const encodedTransshipmentCallData = transshipmentReceiver.interface.encodeFunctionData("sendMassage", [
-    //     massageParam,
-    //   ]);
-
-    //   result = await userSrcAccount
-    //     .connect(user)
-    //     .execute(transshipmentSender.address, fees, encodedTransshipmentCallData, { value: fees });
-
-    //   console.log(await dstUSDC.balanceOf(userDstAccount.address));
-
-    //   await expect(result).to.be.not.reverted;
-    // });
 
     // it("should success send massage from account to account for transfer tokens with middle chain", async () => {
     //   const {
@@ -404,14 +359,14 @@ describe("Method: safeMint: ", () => {
       // await srcUSDC.connect(user).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
       await srcUSDC.connect(alice).mint(alice.address, ethers.utils.parseUnits("100", 18));
-      await srcUSDC.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("10", 18));
+      await srcUSDC.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
       await transshipmentSender.connect(user).createAccount("name_src_1", 1);
       const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
 
       // await transshipmentReceiver.connect(user).createAccount("name_dst_1", 1);
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
-      await dstUSDC.connect(user).mint(userDstAccount.address, ethers.utils.parseUnits("100", 18));
+      await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
 
       console.count();
 
@@ -419,11 +374,11 @@ describe("Method: safeMint: ", () => {
         userAddress: alice.address,
         userNonce: await transshipmentSender.userNonce(alice.address),
         srcTokenAddress: srcUSDC.address,
-        srcTokenAmount: ethers.utils.parseUnits("10", 18),
+        srcTokenAmount: 110,
         dstChainSelector: 2,
         dstExecutor: userDstAccount.address, // eq to srcAccount
         dstTokenAddress: dstUSDC.address,
-        dstTokenAmount: ethers.utils.parseUnits("10", 18),
+        dstTokenAmount: 100,
         dstReceiver: alice.address,
       };
 
@@ -434,7 +389,7 @@ describe("Method: safeMint: ", () => {
       console.log("managerSignature: ", managerSignature);
 
       const fees = ethers.utils.parseUnits("1", 18);
-      console.log(await dstUSDC.balanceOf(alice.address));
+
       result = await transshipmentSender
         .connect(alice)
         .bridgeTokens(managerSignature, ZERO_ADDRESS, 200000, fees, bridgeParams, { value: fees });

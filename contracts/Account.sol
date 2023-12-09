@@ -13,13 +13,6 @@ contract Account is IAccount {
     string public name;
     uint8 public accountType;
 
-    struct Certificate {
-        address tokenAddress;
-        uint256 amount;
-        address receiver;
-        uint256 expirationTime;
-    }
-
     receive() external payable {}
 
     function initialize(address _owner, address _transshipment, string memory _name, uint8 _accountType) external {
@@ -45,10 +38,10 @@ contract Account is IAccount {
         bytes memory dataToCall;
         if (srcTokenAddress == address(0) || dstTokenAddress == address(0)) {
             nativeAmount = dstTokenAmount;
-            require(msg.value >= dstTokenAmount, "Unfair bridge amount"); // src - fee\
+            require(msg.value >= dstTokenAmount, "Unfair bridge amount");
             dataToCall = abi.encodeWithSelector(IAccount(address(0)).execute.selector, dstReceiver, nativeAmount, "0x");
         } else {
-            require(IERC20(srcTokenAddress).balanceOf(address(this)) >= dstTokenAmount, "Unfair bridge amount"); // src - fee
+            require(IERC20(srcTokenAddress).balanceOf(address(this)) >= dstTokenAmount, "Unfair bridge amount");
             bytes memory transferData = abi.encodeWithSelector(
                 IERC20(address(0)).transfer.selector,
                 dstReceiver,
@@ -64,7 +57,6 @@ contract Account is IAccount {
         bytes memory dstMassageData = abi.encode(
             MassageParam(0, address(0), "", address(this), nativeAmount, dataToCall, address(0), 0, address(0), 0)
         );
-
         _transshipment.sendMassage(
             MassageParam(
                 dstChainSelector,
@@ -91,7 +83,6 @@ contract Account is IAccount {
         console.log("account execute: ", state);
         bool success;
         (success, result) = to.call{value: value}(data);
-
         if (!success) {
             assembly {
                 revert(add(result, 32), mload(result))

@@ -103,9 +103,6 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             if (feeAmount > msg.value) revert NotEnoughBalance(msg.value, feeAmount);
             ethFeeAmount = feeAmount;
         } else {
-            console.log("address", address(this));
-            console.log("address", feeAmount);
-
             s_linkToken.safeTransferFrom(msg.sender, address(this), feeAmount);
         }
         console.log("TOKENS");

@@ -73,7 +73,7 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
 
     function sendUniversalMassage(MassageParam[] calldata massageParams) external {
         for (uint256 i = 0; i < massageParams.length; i++) {
-            _sendMessage(massageParams[i]);
+            _sendMessage(massageParams[i], msg.sender);
         }
     }
 
@@ -139,11 +139,17 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     }
 
     function sendMassage(MassageParam calldata massageParam) public payable {
-        _sendMessage(massageParam);
+        _sendMessage(massageParam, msg.sender);
+    }
+
+    function systemSendMassage(MassageParam calldata massageParam, address senderAddress) public payable {
+        require(msg.sender == address(this), "Only system calls");
+        _sendMessage(massageParam, senderAddress);
     }
 
     function _sendMessage(
-        MassageParam calldata massageParam
+        MassageParam calldata massageParam,
+        address senderAddress
     )
         internal
         override
@@ -156,9 +162,10 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             "Wrong fee token address"
         );
         console.log("after feeToken token check");
+        bytes memory dataToSend = appendAddressToData(senderAddress, massageParam.dataToSend);
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
             massageParam.receiver,
-            massageParam.dataToSend,
+            dataToSend,
             massageParam.token,
             massageParam.amount,
             massageParam.feeToken,
@@ -201,10 +208,13 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         // TODO: add check userId with srcChain and destinationCaller
         // TODO: add check addressToExecute != address(this) ?
         console.log("_ccipReceive");
-        MassageParam memory massageParam = abi.decode(any2EvmMessage.data, (MassageParam));
+        (address initiatorAddress, bytes memory massageParamData) = extractAddressFromData(any2EvmMessage.data);
+        MassageParam memory massageParam = abi.decode(massageParamData, (MassageParam));
         console.log("decode");
         if (!isBytesEmpty(massageParam.dataToExecute)) {
             console.log("Execute");
+            if (accounts[massageParam.addressToExecute])
+                require(massageParam.addressToExecute == initiatorAddress, "Wrong request for execution");
             bytes memory result = execute(
                 CallData({
                     target: massageParam.addressToExecute,
@@ -216,13 +226,13 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         if (!isBytesEmpty(massageParam.dataToSend)) {
             console.log("Send");
             massageParam = abi.decode(massageParam.dataToSend, (MassageParam));
-            this.sendMassage(massageParam); // convert massageParam to calldata store type
+            this.systemSendMassage(massageParam, initiatorAddress); // convert massageParam to calldata store type
         }
         console.log("emit");
         emit MessageReceived(
             any2EvmMessage.messageId,
-            any2EvmMessage.sourceChainSelector, // fetch the source chain identifier (aka selector)
-            abi.decode(any2EvmMessage.sender, (address)), // abi-decoding of the sender address,
+            any2EvmMessage.sourceChainSelector,
+            abi.decode(any2EvmMessage.sender, (address)),
             any2EvmMessage.data,
             any2EvmMessage.destTokenAmounts
         );
@@ -248,5 +258,22 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             }
         }
         return true;
+    }
+
+    function appendAddressToData(address _addr, bytes calldata _data) public pure returns (bytes memory) {
+        return abi.encodePacked(bytes20(_addr), _data);
+    }
+
+    function extractAddressFromData(bytes memory _combinedData) public pure returns (address, bytes memory) {
+        require(_combinedData.length >= 20, "Insufficient length");
+        address addr;
+        assembly {
+            addr := mload(add(_combinedData, 20))
+        }
+        bytes memory data = new bytes(_combinedData.length - 20);
+        for (uint i = 20; i < _combinedData.length; i++) {
+            data[i - 20] = _combinedData[i];
+        }
+        return (addr, data);
     }
 }

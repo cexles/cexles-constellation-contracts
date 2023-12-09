@@ -168,8 +168,15 @@ describe("Method: safeMint: ", () => {
         transshipmentReceiver,
         manager,
         user,
+        deployer,
         srcDomain,
       } = await loadFixture(prepareEnvironment);
+
+      await transshipmentSender.connect(deployer).allowlistSender(transshipmentReceiver.address, true);
+      await transshipmentReceiver.connect(deployer).allowlistSender(transshipmentSender.address, true);
+
+      console.log("transshipmentSender: ", transshipmentSender.address);
+      console.log("transshipmentReceiver: ", transshipmentReceiver.address);
 
       const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
       const userDstAccountAddress = await transshipmentReceiver.getAccountAddress(user.address);
@@ -187,12 +194,12 @@ describe("Method: safeMint: ", () => {
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
       await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
 
-      const encodedTransfer = dstUSDC.interface.encodeFunctionData("transfer", [manager.address, 100]); // Encode transfer from dstAcc to manager
+      const encodedTransfer = dstUSDC.interface.encodeFunctionData("transfer", [manager.address, 100]);
       const encodedData = userDstAccount.interface.encodeFunctionData("execute", [
         dstUSDC.address,
         0,
         encodedTransfer,
-      ]); // Encode call user dst account call usdc for transfer
+      ]);
 
       const dstMassageParam: ITransshipmentStructures.MassageParamStruct = {
         destinationChainSelector: 0,

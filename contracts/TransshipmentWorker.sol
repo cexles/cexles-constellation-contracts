@@ -87,6 +87,7 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @param _link The address of the link contract.
     constructor(address _router, address _link) CCIPReceiver(_router) {
         s_linkToken = IERC20(_link);
+        allowlistedSenders[address(this)] = true;
     }
 
     /// @dev Modifier to allow only the contract itself to execute a function.
@@ -99,7 +100,6 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
     /// @param _destinationChainSelector The selector of the destination chain.
     modifier onlyAllowlistedDestinationChain(uint64 _destinationChainSelector) {
-        // TODO: add checks
         // if (!allowlistedDestinationChains[_destinationChainSelector])
         //     revert DestinationChainNotAllowed(_destinationChainSelector);
         _;
@@ -109,9 +109,8 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @param _sourceChainSelector The selector of the destination chain.
     /// @param _sender The address of the sender.
     modifier onlyAllowlisted(uint64 _sourceChainSelector, address _sender) {
-        // TODO: add checks
         // if (!allowlistedSourceChains[_sourceChainSelector]) revert SourceChainNotAllowed(_sourceChainSelector);
-        // if (!allowlistedSenders[_sender]) revert SenderNotAllowed(_sender);
+        if (!allowlistedSenders[_sender]) revert SenderNotAllowed(_sender);
         _;
     }
 
@@ -144,7 +143,10 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @dev Assumes your contract has sufficient LINK to pay for CCIP fees.
 
     /// @return messageId The ID of the CCIP message that was sent.
-    function _sendMessage(MassageParam calldata massageParam) internal virtual returns (bytes32 messageId);
+    function _sendMessage(
+        MassageParam calldata massageParam,
+        address senderAddress
+    ) internal virtual returns (bytes32 messageId);
 
     /**
      * @notice Returns the details of the last CCIP received message.
@@ -241,7 +243,7 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
     function _buildCCIPMessage(
         address _receiver,
-        bytes calldata _data,
+        bytes memory _data,
         address _token,
         uint256 _amount,
         address _feeTokenAddress,

@@ -15,12 +15,6 @@ import "hardhat/console.sol";
 contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     using SafeERC20 for IERC20;
 
-    struct CallData {
-        address target;
-        uint256 value;
-        bytes data;
-    }
-
     using SignatureChecker for address;
     string public constant NAME = "Transshipment";
     string public constant VERSION = "0.0.1";
@@ -30,10 +24,7 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
     mapping(address => bool) public accounts;
     mapping(address => uint256) public userNonce;
 
-    error ErrorInCall(bytes result);
-
     event AccountCreated(address userAddress, address accountAddress, string name, uint8 accountType);
-    event Executed(CallData calldataStruct);
 
     //TODO: Plan:
     // 1. Add received massage validation
@@ -205,8 +196,6 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
         override
         onlyAllowlisted(any2EvmMessage.sourceChainSelector, abi.decode(any2EvmMessage.sender, (address)))
     {
-        // TODO: add check userId with srcChain and destinationCaller
-        // TODO: add check addressToExecute != address(this) ?
         console.log("_ccipReceive");
         (address initiatorAddress, bytes memory massageParamData) = extractAddressFromData(any2EvmMessage.data);
         MassageParam memory massageParam = abi.decode(massageParamData, (MassageParam));
@@ -236,44 +225,5 @@ contract Transshipment is ITransshipment, TransshipmentWorker, EIP712 {
             any2EvmMessage.data,
             any2EvmMessage.destTokenAmounts
         );
-    }
-
-    function multicall(CallData[] memory calldataStructArray) internal returns (bool) {
-        for (uint256 i = 0; i < calldataStructArray.length; i++) {
-            execute(calldataStructArray[i]);
-        }
-    }
-
-    function execute(CallData memory calldataStruct) internal returns (bytes memory result) {
-        bool success;
-        (success, result) = calldataStruct.target.call{value: calldataStruct.value}(calldataStruct.data);
-        if (!success) revert ErrorInCall(result);
-        emit Executed(calldataStruct);
-    }
-
-    function isBytesEmpty(bytes memory data) internal pure returns (bool) {
-        for (uint256 i = 0; i < data.length; i++) {
-            if (data[i] != 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function appendAddressToData(address _addr, bytes calldata _data) public pure returns (bytes memory) {
-        return abi.encodePacked(bytes20(_addr), _data);
-    }
-
-    function extractAddressFromData(bytes memory _combinedData) public pure returns (address, bytes memory) {
-        require(_combinedData.length >= 20, "Insufficient length");
-        address addr;
-        assembly {
-            addr := mload(add(_combinedData, 20))
-        }
-        bytes memory data = new bytes(_combinedData.length - 20);
-        for (uint i = 20; i < _combinedData.length; i++) {
-            data[i - 20] = _combinedData[i];
-        }
-        return (addr, data);
     }
 }

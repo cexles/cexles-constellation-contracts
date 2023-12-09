@@ -14,46 +14,6 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     using EnumerableMap for EnumerableMap.Bytes32ToUintMap;
     using SafeERC20 for IERC20;
 
-    // Custom errors to provide more descriptive revert messages.
-    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance to cover the fees.
-    error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
-    error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.
-    error DestinationChainNotAllowed(uint64 destinationChainSelector); // Used when the destination chain has not been allowlisted by the contract owner.
-    error SourceChainNotAllowed(uint64 sourceChainSelector); // Used when the source chain has not been allowlisted by the contract owner.
-    error SenderNotAllowed(address sender); // Used when the sender has not been allowlisted by the contract owner.
-    error OnlySelf(); // Used when a function is called outside of the contract itself.
-    error ErrorCase(); // Used when simulating a revert during message processing.
-    event MessageFailed(bytes32 indexed messageId, bytes reason);
-    event MessageRecovered(bytes32 indexed messageId);
-    error MessageNotFailed(bytes32 messageId);
-
-    // Event emitted when a message is sent to another chain.
-    event MessageSent(
-        bytes32 indexed messageId, // The unique ID of the CCIP message.
-        MassageParam massageParam,
-        // uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
-        // address receiver, // The address of the receiver on the destination chain.
-        // bytes dataToSend,
-        // address addressToExecute,
-        // uint256 valueToExecute,
-        // bytes dataToExecute,
-        // address token, // The token address that was transferred.
-        // uint256 tokenAmount, // The token amount that was transferred.
-        // address feeToken, // the token address used to pay CCIP fees.
-        uint256 fees // The fees paid for sending the message.
-    );
-
-    // Event emitted when a message is received from another chain.
-    event MessageReceived(
-        bytes32 indexed messageId, // The unique ID of the CCIP message.
-        uint64 indexed sourceChainSelector, // The chain selector of the source chain.
-        address sender, // The address of the sender from the source chain.
-        bytes text, // The text that was received.
-        Client.EVMTokenAmount[] tokenAmounts // The token addresses and amounts a that was transferred.
-    );
-
-    event MessageSucceeds(bytes32 messageId);
-
     bytes32 public s_lastReceivedMessageId; // Store the last received messageId.
     address public s_lastReceivedTokenAddress; // Store the last received token address.
     uint256 public s_lastReceivedTokenAmount; // Store the last received amount.
@@ -77,10 +37,6 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     IERC20 internal s_linkToken;
 
     // Example error code, could have many different error codes.
-    enum ErrorCode {
-        RESOLVED,
-        BASIC
-    }
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
@@ -275,7 +231,6 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @dev This function reverts if there are no funds to withdraw or if the transfer fails.
     /// It should only be callable by the owner of the contract.
     /// @param _beneficiary The address to which the Ether should be sent.
-    // TODO: remove method
     function withdraw(address _beneficiary) public onlyOwner {
         uint256 amount = address(this).balance;
         if (amount == 0) revert NothingToWithdraw();
@@ -287,10 +242,48 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @dev This function reverts with a 'NothingToWithdraw' error if there are no tokens to withdraw.
     /// @param _beneficiary The address to which the tokens will be sent.
     /// @param _token The contract address of the ERC20 token to be withdrawn.
-    // TODO: remove method
     function withdrawToken(address _beneficiary, address _token) public onlyOwner {
         uint256 amount = IERC20(_token).balanceOf(address(this));
         if (amount == 0) revert NothingToWithdraw();
         IERC20(_token).safeTransfer(_beneficiary, amount);
+    }
+
+    function multicall(CallData[] memory calldataStructArray) internal returns (bool) {
+        for (uint256 i = 0; i < calldataStructArray.length; i++) {
+            execute(calldataStructArray[i]);
+        }
+    }
+
+    function execute(CallData memory calldataStruct) internal returns (bytes memory result) {
+        bool success;
+        (success, result) = calldataStruct.target.call{value: calldataStruct.value}(calldataStruct.data);
+        if (!success) revert ErrorInCall(result);
+        emit Executed(calldataStruct);
+    }
+
+    function isBytesEmpty(bytes memory data) internal pure returns (bool) {
+        for (uint256 i = 0; i < data.length; i++) {
+            if (data[i] != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function appendAddressToData(address _addr, bytes calldata _data) internal pure returns (bytes memory) {
+        return abi.encodePacked(bytes20(_addr), _data);
+    }
+
+    function extractAddressFromData(bytes memory _combinedData) internal pure returns (address, bytes memory) {
+        require(_combinedData.length >= 20, "Insufficient length");
+        address addr;
+        assembly {
+            addr := mload(add(_combinedData, 20))
+        }
+        bytes memory data = new bytes(_combinedData.length - 20);
+        for (uint i = 20; i < _combinedData.length; i++) {
+            data[i - 20] = _combinedData[i];
+        }
+        return (addr, data);
     }
 }

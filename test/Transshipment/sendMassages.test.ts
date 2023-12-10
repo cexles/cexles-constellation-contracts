@@ -1,18 +1,8 @@
 import { expect } from "chai";
-import { BigNumber, ContractTransaction } from "ethers";
-import { ethers, getChainId } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ContractTransaction } from "ethers";
+import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import {
-  sign,
-  Domain,
-  typesForBridge,
-  ZERO_ADDRESS,
-  ZERO_BYTES,
-  standardPrepare,
-  MassageParamStructAbi,
-  BridgeParamsStruct,
-} from "@test-utils";
+import { ZERO_ADDRESS, ZERO_BYTES, standardPrepare, MassageParamStructAbi } from "@test-utils";
 import { ITransshipmentStructures } from "@contracts/Transshipment";
 import { ParamType } from "@ethersproject/abi";
 
@@ -47,12 +37,10 @@ describe("Method: sendMassage: ", () => {
       result = await transshipmentSender.connect(user).sendMassage(massageParam);
 
       await expect(result).to.be.not.reverted;
-      console.log(await srcUSDC.balanceOf(transshipmentReceiver.address));
-      console.log(await srcUSDC.balanceOf(user.address));
     });
 
     it("should success send tokens from EOA (fee in ETH)", async () => {
-      const { link, srcUSDC, transshipmentSender, transshipmentReceiver, user } = await loadFixture(
+      const { srcUSDC, transshipmentSender, transshipmentReceiver, user } = await loadFixture(
         standardPrepare
       );
 
@@ -77,8 +65,6 @@ describe("Method: sendMassage: ", () => {
         .sendMassage(massageParam, { value: ethers.utils.parseUnits("1", 18) });
 
       await expect(result).to.be.not.reverted;
-      console.log(await srcUSDC.balanceOf(transshipmentReceiver.address));
-      console.log(await srcUSDC.balanceOf(user.address));
     });
 
     it("should success send ETH from EOA (fee in ETH)", async () => {
@@ -86,7 +72,6 @@ describe("Method: sendMassage: ", () => {
         standardPrepare
       );
       let contractBalance = await ethers.provider.getBalance(user.address);
-      console.log(contractBalance);
       const massageParam: ITransshipmentStructures.MassageParamStruct = {
         destinationChainSelector: 2,
         receiver: transshipmentReceiver.address, // address at bsc
@@ -103,9 +88,7 @@ describe("Method: sendMassage: ", () => {
       result = await transshipmentSender
         .connect(user)
         .sendMassage(massageParam, { value: ethers.utils.parseUnits("5", 18) });
-
       contractBalance = await ethers.provider.getBalance(transshipmentSender.address);
-      console.log(contractBalance);
 
       await expect(result).to.be.not.reverted;
     });
@@ -115,7 +98,6 @@ describe("Method: sendMassage: ", () => {
         standardPrepare
       );
       let contractBalance = await ethers.provider.getBalance(user.address);
-      console.log(contractBalance);
       const massageParam: ITransshipmentStructures.MassageParamStruct = {
         destinationChainSelector: 2,
         receiver: transshipmentReceiver.address, // address at bsc
@@ -137,7 +119,6 @@ describe("Method: sendMassage: ", () => {
         .sendMassage(massageParam, { value: ethers.utils.parseUnits("5", 18) });
 
       contractBalance = await ethers.provider.getBalance(transshipmentSender.address);
-      console.log(contractBalance);
 
       await expect(result).to.be.not.reverted;
     });
@@ -209,8 +190,6 @@ describe("Method: sendMassage: ", () => {
       result = await userSrcAccount
         .connect(user)
         .execute(transshipmentSender.address, fees, encodedTransshipmentCallData, { value: fees });
-
-      console.log(await dstUSDC.balanceOf(userDstAccount.address));
 
       await expect(result).to.be.not.reverted;
     });

@@ -64,34 +64,5 @@ describe("Method: constructor", () => {
 
       expect(rout).to.be.eq(router.address);
     });
-
-    // it("should admin have DEFAULT_ADMIN_ROLE", async () => {
-    //   const transshipmentContractDeploy = TransshipmentInstance.connect(deployer).deploy(
-    //     admin.address,
-    //     operator.address,
-    //     minter.address
-    //   );
-    //   await expect(transshipmentContractDeploy).to.be.not.reverted;
-    // });
-
-    // it("should admin have DEFAULT_ADMIN_ROLE", async () => {
-    //   const DEFAULT_ADMIN_ROLE = await achievementsContract.DEFAULT_ADMIN_ROLE();
-    //   expect(await achievementsContract.hasRole(DEFAULT_ADMIN_ROLE, admin.address)).to.be.true;
-    // });
-
-    // it("should operator have OPERATOR_ROLE", async () => {
-    //   const OPERATOR_ROLE = await achievementsContract.OPERATOR_ROLE();
-    //   expect(await achievementsContract.hasRole(OPERATOR_ROLE, operator.address)).to.be.true;
-    // });
-
-    // it("should operator have OPERATOR_ROLE", async () => {
-    //   const MINTER_ROLE = await achievementsContract.MINTER_ROLE();
-    //   expect(await achievementsContract.hasRole(MINTER_ROLE, minter.address)).to.be.true;
-    // });
-
-    // it("success: should support ERC1155 interface", async function () {
-    //   const INTERFACE_ID_ER1155 = "0x01ffc9a7";
-    //   expect(await achievementsContract.supportsInterface(INTERFACE_ID_ER1155)).to.be.true;
-    // });
   });
 });

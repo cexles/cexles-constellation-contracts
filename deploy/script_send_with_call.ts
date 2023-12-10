@@ -55,14 +55,13 @@ const MassageParamStructAbi = [
 ];
 
 const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
-  const { deploy, execute, read, get } = typedDeployments(deployments);
-  const { deployer, router, link } = await getNamedAccounts();
+  const { execute, get } = typedDeployments(deployments);
+  const { deployer, link } = await getNamedAccounts();
 
   const Transshipment = await get("Transshipment");
-  // const USDC_ADDRESS = await get("MockERC20");
 
-  const Trannsshipmetn_Mumbai = "0x78486e1A98B491d04843fcb660396e2669211C2B";
-  const Trannsshipmetn_BSC = "0x973eb82B75Be09B901Dd8295f4105b3141032fDd";
+  const Trannsshipmetn_Mumbai = "0xe19e7379699E0150fF6F1A2f462b30ec332D2940";
+  const Trannsshipmetn_BSC = "0xe19e7379699E0150fF6F1A2f462b30ec332D2940";
 
   const BnM_token_Mumbai = "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40";
   const BnM_token_BSC = "0xbfa2acd33ed6eec0ed3cc06bf1ac38d22b36b9e9";

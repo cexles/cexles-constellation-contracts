@@ -1,3 +1,3 @@
-// describe("Account: ", () => {
-//     require("./constructor.test");
-//   });
+describe("Account: ", () => {
+  require("./negative.test");
+});

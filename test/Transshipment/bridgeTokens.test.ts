@@ -16,7 +16,7 @@ import {
 import { ITransshipmentStructures } from "@contracts/Transshipment";
 import { ParamType } from "@ethersproject/abi";
 
-describe.only("Method: bridgeTokens: ", () => {
+describe("Method: bridgeTokens: ", () => {
   let result: ContractTransaction;
   const amount: BigNumber = ethers.utils.parseUnits("10", 18);
   const fees: BigNumber = ethers.utils.parseUnits("1", 18);

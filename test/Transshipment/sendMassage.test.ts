@@ -117,7 +117,7 @@ describe("Method: safeMint: ", () => {
     });
   });
 
-  describe.only("When all parameters correct ", () => {
+  describe("When all parameters correct ", () => {
     // let user: SignerWithAddress, manager: SignerWithAddress;
     // let srcUSDC: MockERC20;
     // let dstUSDC: MockERC20;

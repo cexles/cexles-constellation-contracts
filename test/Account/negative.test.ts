@@ -1,20 +1,9 @@
 import { expect } from "chai";
-import { ContractTransaction } from "ethers";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import {
-  sign,
-  typesForBridge,
-  ZERO_ADDRESS,
-  ZERO_BYTES,
-  standardPrepare,
-  BridgeParamsStruct,
-} from "@test-utils";
-import { ITransshipmentStructures } from "@contracts/Transshipment";
+import { sign, typesForBridge, ZERO_ADDRESS, standardPrepare, BridgeParamsStruct } from "@test-utils";
 
 describe("Negative:", () => {
-  let result: ContractTransaction;
-
   describe("When one of parameters is incorrect", () => {
     it("Method: initialize (owner ZERO_ADDRESS)", async () => {
       const { alice, accountContractImpl } = await loadFixture(standardPrepare);
@@ -33,17 +22,8 @@ describe("Negative:", () => {
     });
 
     it("Method: bridgeTokens (Wrong Signature)", async () => {
-      const {
-        link,
-        srcUSDC,
-        dstUSDC,
-        transshipmentSender,
-        manager,
-        user,
-        alice,
-        srcDomain,
-        accountContractImpl,
-      } = await loadFixture(standardPrepare);
+      const { link, srcUSDC, dstUSDC, transshipmentSender, manager, user, alice, srcDomain } =
+        await loadFixture(standardPrepare);
 
       const fees = ethers.utils.parseUnits("1", 18);
       const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
@@ -59,7 +39,6 @@ describe("Negative:", () => {
       await srcUSDC.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
       await transshipmentSender.connect(user).createAccount("name_src_1", 1);
-      const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
 
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
       await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
@@ -126,7 +105,7 @@ describe("Negative:", () => {
     });
 
     it("Method: bridge with ETH (Unfair bridge amount)", async () => {
-      const { link, srcUSDC, dstUSDC, user, alice, accountContractImpl } = await loadFixture(standardPrepare);
+      const { srcUSDC, user, alice, accountContractImpl } = await loadFixture(standardPrepare);
 
       await accountContractImpl.connect(alice).initialize(alice.address, user.address, "name_src_1", 1);
 
@@ -147,7 +126,7 @@ describe("Negative:", () => {
     });
 
     it("Method: bridge with ETH (Unfair bridge amount)", async () => {
-      const { link, srcUSDC, dstUSDC, user, alice, accountContractImpl } = await loadFixture(standardPrepare);
+      const { user, alice, accountContractImpl } = await loadFixture(standardPrepare);
 
       await accountContractImpl.connect(alice).initialize(alice.address, user.address, "name_src_1", 1);
 
@@ -168,9 +147,7 @@ describe("Negative:", () => {
     });
 
     it("Method: execute (Wrong caller)", async () => {
-      const { link, srcUSDC, dstUSDC, user, alice, manager, accountContractImpl } = await loadFixture(
-        standardPrepare
-      );
+      const { dstUSDC, user, alice, manager, accountContractImpl } = await loadFixture(standardPrepare);
 
       await accountContractImpl.connect(alice).initialize(alice.address, user.address, "name_src_1", 1);
 

@@ -3,11 +3,11 @@ import { typedDeployments } from "@utils";
 import { ContractInterface, ethers } from "ethers";
 import * as MockERC20Artifact from "../artifacts/contracts/mock/MockERC20.sol/MockERC20.json";
 
-const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
-  const { deploy, execute, read, get } = typedDeployments(deployments);
-  const { deployer, router, link } = await getNamedAccounts();
+const migrate: DeployFunction = async ({ deployments, getNamedAccounts }) => {
+  const { execute, get } = typedDeployments(deployments);
+  const { deployer } = await getNamedAccounts();
 
-  const Transshipment = await get("Transshipment");
+  // const Transshipment = await get("Transshipment");
   const USDC_ADDRESS = await get("MockERC20");
 
   const callTargetAddress = USDC_ADDRESS.address;

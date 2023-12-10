@@ -1,7 +1,6 @@
 import { ethers, getChainId } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-// import { UpVsDownGameV4 } from "../../types/typechain-types";
-import { BigNumber } from "ethers";
+
 import { Account, MockCCIPRouter, MockERC20, Transshipment } from "@contracts";
 
 export async function standardPrepare() {

@@ -68,10 +68,8 @@ describe("Method: sendMassage: ", () => {
     });
 
     it("should success send ETH from EOA (fee in ETH)", async () => {
-      const { link, srcUSDC, transshipmentSender, transshipmentReceiver, user } = await loadFixture(
-        standardPrepare
-      );
-      let contractBalance = await ethers.provider.getBalance(user.address);
+      const { transshipmentSender, transshipmentReceiver, user } = await loadFixture(standardPrepare);
+
       const massageParam: ITransshipmentStructures.MassageParamStruct = {
         destinationChainSelector: 2,
         receiver: transshipmentReceiver.address, // address at bsc
@@ -88,16 +86,13 @@ describe("Method: sendMassage: ", () => {
       result = await transshipmentSender
         .connect(user)
         .sendMassage(massageParam, { value: ethers.utils.parseUnits("5", 18) });
-      contractBalance = await ethers.provider.getBalance(transshipmentSender.address);
 
       await expect(result).to.be.not.reverted;
     });
 
     it("should success send ETH from EOA (fee in token)", async () => {
-      const { link, srcUSDC, transshipmentSender, transshipmentReceiver, user } = await loadFixture(
-        standardPrepare
-      );
-      let contractBalance = await ethers.provider.getBalance(user.address);
+      const { link, transshipmentSender, transshipmentReceiver, user } = await loadFixture(standardPrepare);
+
       const massageParam: ITransshipmentStructures.MassageParamStruct = {
         destinationChainSelector: 2,
         receiver: transshipmentReceiver.address, // address at bsc
@@ -117,8 +112,6 @@ describe("Method: sendMassage: ", () => {
       result = await transshipmentSender
         .connect(user)
         .sendMassage(massageParam, { value: ethers.utils.parseUnits("5", 18) });
-
-      contractBalance = await ethers.provider.getBalance(transshipmentSender.address);
 
       await expect(result).to.be.not.reverted;
     });

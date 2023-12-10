@@ -55,7 +55,7 @@ const MassageParamStructAbi = [
   },
 ];
 
-const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
+const migrate: DeployFunction = async ({ deployments, getNamedAccounts }) => {
   const { execute, get } = typedDeployments(deployments);
   const { deployer, link } = await getNamedAccounts();
 

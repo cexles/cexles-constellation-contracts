@@ -36,7 +36,7 @@ describe("Set and Get method: ", () => {
   describe("Method: allowlistSourceChain", () => {
     describe("When one of parameters is incorrect", () => {
       it("When non Owner", async () => {
-        const { transshipmentSender, user, link } = await loadFixture(standardPrepare);
+        const { transshipmentSender, user } = await loadFixture(standardPrepare);
 
         await expect(
           transshipmentSender.connect(user).allowlistSourceChain("111000111", true)

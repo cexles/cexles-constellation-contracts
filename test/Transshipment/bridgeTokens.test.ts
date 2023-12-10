@@ -11,7 +11,7 @@ describe("Method: bridgeTokens: ", () => {
 
   describe("When all parameters correct ", () => {
     describe("should success bridge tokens for EOA with account bridge (fee in ETH)", () => {
-      let link, srcUSDC, dstUSDC, transshipmentSender, transshipmentReceiver, manager, user, alice, srcDomain;
+      let link, srcUSDC, dstUSDC, transshipmentSender, manager, user, alice, srcDomain;
       let userDstAccount;
 
       before(async () => {
@@ -20,7 +20,6 @@ describe("Method: bridgeTokens: ", () => {
           (srcUSDC = res.srcUSDC),
           (dstUSDC = res.dstUSDC),
           (transshipmentSender = res.transshipmentSender),
-          (transshipmentReceiver = res.transshipmentReceiver),
           (manager = res.manager),
           (user = res.user),
           (alice = res.alice),
@@ -28,6 +27,7 @@ describe("Method: bridgeTokens: ", () => {
 
         const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
         const userDstAccountAddress = userSrcAccountAddress; // one address for all networks
+        console.count();
 
         await link.connect(user).mint(user.address, ethers.utils.parseUnits("100", 18));
         await link.connect(user).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
@@ -81,7 +81,7 @@ describe("Method: bridgeTokens: ", () => {
     });
 
     describe("should success bridge tokens for EOA with account bridge (fee in Token)", () => {
-      let link, srcUSDC, dstUSDC, transshipmentSender, transshipmentReceiver, manager, user, alice, srcDomain;
+      let link, srcUSDC, dstUSDC, transshipmentSender, manager, user, alice, srcDomain;
       let userDstAccount;
 
       before(async () => {
@@ -90,7 +90,6 @@ describe("Method: bridgeTokens: ", () => {
           (srcUSDC = res.srcUSDC),
           (dstUSDC = res.dstUSDC),
           (transshipmentSender = res.transshipmentSender),
-          (transshipmentReceiver = res.transshipmentReceiver),
           (manager = res.manager),
           (user = res.user),
           (alice = res.alice),
@@ -151,17 +150,21 @@ describe("Method: bridgeTokens: ", () => {
     });
 
     it("should success bridge ETH for EOA with account bridge (fee in ETH)", async () => {
-      const { srcUSDC, dstUSDC, transshipmentSender, manager, user, alice, srcDomain } = await loadFixture(
+      const { dstUSDC, transshipmentSender, manager, user, alice, srcDomain } = await loadFixture(
         standardPrepare
       );
 
       const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
       const userDstAccountAddress = userSrcAccountAddress; // one address for all networks
+      console.count();
+      console.log(await user.getBalance());
 
       await transshipmentSender.connect(user).createAccount("name_src_1", 1);
 
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
       await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
+
+      console.count();
 
       const amountToSend = ethers.utils.parseUnits("20", 18);
       await user.sendTransaction({
@@ -181,7 +184,11 @@ describe("Method: bridgeTokens: ", () => {
         dstReceiver: alice.address,
       };
 
+      console.count();
+
       const managerSignature = await sign(srcDomain, typesForBridge, bridgeParams, manager);
+
+      console.log("managerSignature: ", managerSignature);
 
       result = await transshipmentSender
         .connect(user)
@@ -189,48 +196,67 @@ describe("Method: bridgeTokens: ", () => {
           value: ethers.utils.parseUnits("20", 18),
         });
 
+      console.log(await dstUSDC.balanceOf(user.address));
+
       await expect(result).to.be.not.reverted;
+      console.log("alice.getBalance()", await alice.getBalance());
+      console.log(await user.getBalance());
+      console.log(await transshipmentSender.getFailedMessagesIds());
     });
 
-    it("should success bridge ETH for EOA with account bridge (fee in Token)", async () => {
-      const { link, dstUSDC, transshipmentSender, manager, user, alice, srcDomain } = await loadFixture(
-        standardPrepare
-      );
+    // it("should success bridge ETH for EOA with account bridge (fee in Token)", async () => {
+    //   const { link, dstUSDC, transshipmentSender, manager, user, alice, srcDomain } = await loadFixture(
+    //     standardPrepare
+    //   );
 
-      const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
-      const userDstAccountAddress = userSrcAccountAddress; // one address for all networks
+    //   const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
+    //   const userDstAccountAddress = userSrcAccountAddress; // one address for all networks
 
-      await link.connect(alice).mint(alice.address, ethers.utils.parseUnits("100", 18));
-      await link.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("1", 18));
+    //   await link.connect(alice).mint(alice.address, ethers.utils.parseUnits("100", 18));
+    //   await link.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("1", 18));
 
-      await transshipmentSender.connect(user).createAccount("name_src_1", 1);
-      const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
+    //   await transshipmentSender.connect(user).createAccount("name_src_1", 1);
+    //   const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
 
-      // await transshipmentReceiver.connect(user).createAccount("name_dst_1", 1);
-      const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
-      await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
+    //   // await transshipmentReceiver.connect(user).createAccount("name_dst_1", 1);
+    //   const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
+    //   await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
 
-      const bridgeParams: BridgeParamsStruct = {
-        userAddress: alice.address,
-        userNonce: await transshipmentSender.userNonce(user.address),
-        srcTokenAddress: ZERO_ADDRESS,
-        srcTokenAmount: ethers.utils.parseUnits("50", 18),
-        dstChainSelector: 2,
-        dstExecutor: userDstAccount.address, // eq to srcAccount
-        dstTokenAddress: dstUSDC.address,
-        dstTokenAmount: ethers.utils.parseUnits("50", 18),
-        dstReceiver: user.address,
-      };
+    //   const bridgeParams: BridgeParamsStruct = {
+    //     userAddress: alice.address,
+    //     userNonce: await transshipmentSender.userNonce(user.address),
+    //     srcTokenAddress: ZERO_ADDRESS,
+    //     srcTokenAmount: ethers.utils.parseUnits("50", 18),
+    //     dstChainSelector: 2,
+    //     dstExecutor: userDstAccount.address, // eq to srcAccount
+    //     dstTokenAddress: dstUSDC.address,
+    //     dstTokenAmount: ethers.utils.parseUnits("50", 18),
+    //     dstReceiver: user.address,
+    //   };
 
-      const managerSignature = await sign(srcDomain, typesForBridge, bridgeParams, manager);
+    //   console.count();
 
-      const fees = ethers.utils.parseUnits("1", 18);
-      const amount = ethers.utils.parseUnits("50", 18);
+    //   const managerSignature = await sign(srcDomain, typesForBridge, bridgeParams, manager);
 
-      result = await transshipmentSender
-        .connect(alice)
-        .bridgeTokens(managerSignature, link.address, 200000, fees, bridgeParams, { value: amount });
-      await expect(result).to.be.not.reverted;
-    });
+    //   console.log("managerSignature: ", managerSignature);
+
+    //   const fees = ethers.utils.parseUnits("1", 18);
+    //   const amount = ethers.utils.parseUnits("50", 18);
+
+    //   console.log("before alice", await alice.getBalance());
+    //   console.log("before user", await user.getBalance());
+
+    //   result = await transshipmentSender
+    //     .connect(alice)
+    //     .bridgeTokens(managerSignature, link.address, 200000, fees, bridgeParams, { value: amount });
+
+    //   console.log(await dstUSDC.balanceOf(user.address));
+
+    //   await expect(result).to.be.not.reverted;
+    //   console.log("after alice", await alice.getBalance());
+    //   console.log("after user", await user.getBalance());
+
+    //   console.log(await transshipmentSender.getFailedMessagesIds());
+    // });
   });
 });

@@ -1,9 +1,7 @@
 import { DeployFunction } from "hardhat-deploy/types";
 import { typedDeployments } from "@utils";
-import { DEPLOY } from "config";
-import { ZERO_ADDRESS, ZERO_BYTES } from "@test-utils";
 
-const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
+const migrate: DeployFunction = async ({ deployments, getNamedAccounts }) => {
   const { deploy } = typedDeployments(deployments);
   const { deployer } = await getNamedAccounts();
 

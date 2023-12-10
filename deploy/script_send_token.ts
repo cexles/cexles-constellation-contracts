@@ -3,17 +3,17 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { typedDeployments } from "@utils";
 import { ZERO_ADDRESS, ZERO_BYTES } from "@test-utils";
 
-const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
+const migrate: DeployFunction = async ({ deployments, getNamedAccounts }) => {
   const { execute, get } = typedDeployments(deployments);
   const { deployer, link } = await getNamedAccounts();
 
   const Transshipment = await get("Transshipment");
-  const Trannsshipmetn_BSC = "0xe19e7379699E0150fF6F1A2f462b30ec332D2940";
+  const Transshipment_BSC = "0xe19e7379699E0150fF6F1A2f462b30ec332D2940";
   const BnM_token_Mumbai = "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40";
 
   const massageParam: MassageParamStruct = {
     destinationChainSelector: "13264668187771770619",
-    receiver: Trannsshipmetn_BSC, // address at bsc
+    receiver: Transshipment_BSC, // address at bsc
     dataToSend: ZERO_BYTES,
     addressToExecute: ZERO_ADDRESS,
     valueToExecute: 0,

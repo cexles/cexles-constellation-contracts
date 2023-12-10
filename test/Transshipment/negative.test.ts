@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { ContractTransaction } from "ethers";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
@@ -13,8 +12,6 @@ import {
 import { ITransshipmentStructures } from "@contracts/Transshipment";
 
 describe("Negative:", () => {
-  let result: ContractTransaction;
-
   describe("When one of parameters is incorrect", () => {
     it("Method: bridgeTokens (Wrong executor)", async () => {
       const { link, srcUSDC, dstUSDC, transshipmentSender, manager, user, alice, srcDomain } =
@@ -31,7 +28,6 @@ describe("Negative:", () => {
       await srcUSDC.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
       await transshipmentSender.connect(user).createAccount("name_src_1", 1);
-      const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
 
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
       await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
@@ -75,7 +71,6 @@ describe("Negative:", () => {
       await srcUSDC.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
       await transshipmentSender.connect(user).createAccount("name_src_1", 1);
-      const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
 
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
       await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
@@ -119,7 +114,6 @@ describe("Negative:", () => {
       await srcUSDC.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
       await transshipmentSender.connect(user).createAccount("name_src_1", 1);
-      const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
 
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
       await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
@@ -163,7 +157,6 @@ describe("Negative:", () => {
       await srcUSDC.connect(alice).approve(transshipmentSender.address, ethers.utils.parseUnits("100", 18));
 
       await transshipmentSender.connect(user).createAccount("name_src_1", 1);
-      const userSrcAccount = (await ethers.getContractFactory("Account")).attach(userSrcAccountAddress);
 
       const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
       await dstUSDC.connect(user).mint(userDstAccount.address, 1000);

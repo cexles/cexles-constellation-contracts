@@ -54,7 +54,7 @@ const MassageParamStructAbi = [
   },
 ];
 
-const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
+const migrate: DeployFunction = async ({ deployments, getNamedAccounts }) => {
   const { execute, get } = typedDeployments(deployments);
   const { deployer, link } = await getNamedAccounts();
 
@@ -65,8 +65,6 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network 
 
   const BnM_token_Mumbai = "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40";
   const BnM_token_BSC = "0xbfa2acd33ed6eec0ed3cc06bf1ac38d22b36b9e9";
-
-  const srcChainParams = {};
 
   const dstChainParams = {
     callTargetAddress: BnM_token_BSC,

@@ -1,47 +1,8 @@
 # Hardhat template, default wrapper
 
-<!-- Remove after repository creation from hire! -->
+## Cexles smart contracts
 
-## The template supports:
-
-- TypeScrip;
-- JavaScript;
-- TypeChain;
-- SolHint;
-- Prettier;
-- SolCover;
-- Eslint;
-- **CleanDeployments**;
-- **VerifyByName**;
-
-## Advantages of this HardHat template:
-
-1. **Convenient configuration** of your variables for different networks.
-2. Deployment of contracts with **type support**.
-3. Verification of contracts in a convenient way through the **Contract Name**.
-4. Configuring Solidity + TypeScript **Linters** and **Validators**.
-5. Pre-set **most popular networks**.
-6. Convenient prepared folder and file structure.
-7. **Additional Utils** for testing and interacting with smart contracts.
-8. An easy-to-use task to **clean up deployments**.
-9. Convenient and flexible configuration of **logs**, **forks** and **gas reports**.
-10. **Typed NamedAccounts** from convenient interaction.
-
-## Author part:
-
-For more convenient use, you can **fork this repository for yourself and make it your personal template**.
-
-As an author, I will be very pleased that my build was able to improve your experience in developing **amazing** decentralized applications.
-
-### :star2: Also, I will not give up stars on this and my other repositories :star2:
-
-:exclamation: Send me your comments and suggestions. :exclamation:
-
-<!-- Remove after repository creation to hire! -->
-
-## < Project Name > smart contracts
-
-This repo will have a code of < Project Name > Smart Contracts.
+This repo will have a code of Cexles Smart Contracts.
 
 ## Setting project
 

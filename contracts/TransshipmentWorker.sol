@@ -3,21 +3,15 @@ pragma solidity 0.8.19;
 
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
-import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {SafeERC20, IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/utils/SafeERC20.sol";
-import {ITransshipmentStructures} from "./interfaces/ITransshipmentStructures.sol";
+import {ITransshipmentStructures, Client} from "./interfaces/ITransshipmentStructures.sol";
 import {EnumerableMap} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/utils/structs/EnumerableMap.sol";
 
-/// @title - A simple messenger contract for transferring/receiving tokens and data across chains.
+/// @title TransshipmentWorker contract with main logic for Transshipment point contract.
 abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshipmentStructures {
     using EnumerableMap for EnumerableMap.Bytes32ToUintMap;
     using SafeERC20 for IERC20;
-
-    bytes32 public s_lastReceivedMessageId; // Store the last received messageId.
-    address public s_lastReceivedTokenAddress; // Store the last received token address.
-    uint256 public s_lastReceivedTokenAmount; // Store the last received amount.
-    bytes public s_lastReceivedData; // Store the last received text.
 
     // Mapping to keep track of allowlisted destination chains.
     mapping(uint64 => bool) public allowlistedDestinationChains;
@@ -35,8 +29,6 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     EnumerableMap.Bytes32ToUintMap internal s_failedMessages;
 
     IERC20 internal s_linkToken;
-
-    // Example error code, could have many different error codes.
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
@@ -56,6 +48,7 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
     /// @param _destinationChainSelector The selector of the destination chain.
     modifier onlyAllowlistedDestinationChain(uint64 _destinationChainSelector) {
+        // Skip for demo
         // if (!allowlistedDestinationChains[_destinationChainSelector])
         //     revert DestinationChainNotAllowed(_destinationChainSelector);
         _;
@@ -65,6 +58,7 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @param _sourceChainSelector The selector of the destination chain.
     /// @param _sender The address of the sender.
     modifier onlyAllowlisted(uint64 _sourceChainSelector, address _sender) {
+        // Skip for demo
         // if (!allowlistedSourceChains[_sourceChainSelector]) revert SourceChainNotAllowed(_sourceChainSelector);
         if (!allowlistedSenders[_sender]) revert SenderNotAllowed(_sender);
         _;
@@ -97,28 +91,11 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
     /// @notice Sends data and transfer tokens to receiver on the destination chain.
     /// @notice Pay for fees in LINK.
     /// @dev Assumes your contract has sufficient LINK to pay for CCIP fees.
-
     /// @return messageId The ID of the CCIP message that was sent.
     function _sendMessage(
         MassageParam calldata massageParam,
         address senderAddress
     ) internal virtual returns (bytes32 messageId);
-
-    /**
-     * @notice Returns the details of the last CCIP received message.
-     * @dev This function retrieves the ID, text, token address, and token amount of the last received CCIP message.
-     * @return messageId The ID of the last received CCIP message.
-     * @return data The data of the last received CCIP message.
-     * @return tokenAddress The address of the token in the last CCIP received message.
-     * @return tokenAmount The amount of the token in the last CCIP received message.
-     */
-    function getLastReceivedMessageDetails()
-        public
-        view
-        returns (bytes32 messageId, bytes memory data, address tokenAddress, uint256 tokenAmount)
-    {
-        return (s_lastReceivedMessageId, s_lastReceivedData, s_lastReceivedTokenAddress, s_lastReceivedTokenAmount);
-    }
 
     /// @notice The entrypoint for the CCIP router to call. This function should
     /// never revert, all errors should be handled internally in this contract.
@@ -169,7 +146,7 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         onlySelf
         onlyAllowlisted(any2EvmMessage.sourceChainSelector, abi.decode(any2EvmMessage.sender, (address)))
     {
-        _ccipReceive(any2EvmMessage); // process the message - may revert as well
+        _ccipReceive(any2EvmMessage);
     }
 
     /// @notice Allows the owner to retry a failed message in order to unblock the associated tokens.
@@ -248,12 +225,22 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         IERC20(_token).safeTransfer(_beneficiary, amount);
     }
 
+    /**
+     * @dev Executes multiple calls in a batch.
+     * @param calldataStructArray Array of CallData structures to execute.
+     * @return success True if all calls succeed, false otherwise.
+     */
     function multicall(CallData[] memory calldataStructArray) internal returns (bool) {
         for (uint256 i = 0; i < calldataStructArray.length; i++) {
             execute(calldataStructArray[i]);
         }
     }
 
+    /**
+     * @dev Executes a single call.
+     * @param calldataStruct The CallData structure containing target, value, and data.
+     * @return result The result of the call.
+     */
     function execute(CallData memory calldataStruct) internal returns (bytes memory result) {
         bool success;
         (success, result) = calldataStruct.target.call{value: calldataStruct.value}(calldataStruct.data);
@@ -261,6 +248,11 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         emit Executed(calldataStruct);
     }
 
+    /**
+     * @dev Checks if a bytes array is empty.
+     * @param data The bytes array to check.
+     * @return True if the bytes array is empty, false otherwise.
+     */
     function isBytesEmpty(bytes memory data) internal pure returns (bool) {
         for (uint256 i = 0; i < data.length; i++) {
             if (data[i] != 0) {
@@ -270,10 +262,22 @@ abstract contract TransshipmentWorker is CCIPReceiver, OwnerIsCreator, ITransshi
         return true;
     }
 
+    /**
+     * @dev Appends an address to a bytes array.
+     * @param _addr The address to append.
+     * @param _data The bytes array to which the address is appended.
+     * @return result The new bytes array with the address appended.
+     */
     function appendAddressToData(address _addr, bytes calldata _data) internal pure returns (bytes memory) {
         return abi.encodePacked(bytes20(_addr), _data);
     }
 
+    /**
+     * @dev Extracts an address and data from a combined bytes array.
+     * @param _combinedData The combined bytes array containing an address and data.
+     * @return addr The extracted address.
+     * @return data The extracted data.
+     */
     function extractAddressFromData(bytes memory _combinedData) internal pure returns (address, bytes memory) {
         require(_combinedData.length >= 20, "Insufficient length");
         address addr;

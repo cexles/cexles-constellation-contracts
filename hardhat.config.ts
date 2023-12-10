@@ -96,6 +96,16 @@ const config: HardhatUserConfig = {
       chainId: 97,
       accounts: [DEPLOYER_KEY],
     },
+    fuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
+      accounts: [DEPLOYER_KEY],
+    },
+    avalanche: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      chainId: 43114,
+      accounts: [DEPLOYER_KEY],
+    },
   },
   etherscan: {
     apiKey: {
@@ -114,13 +124,13 @@ const config: HardhatUserConfig = {
     router: {
       sepolia: "0xD0daae2231E9CB96b94C8512223533293C3693Bf",
       polygonMumbai: "0x70499c328e1E2a3c41108bd3730F6670a44595D1",
-      avalancheFuji: "0x554472a2720e5e7d5d3c817529aba05eed5f82d8",
+      fuji: "0x554472a2720e5e7d5d3c817529aba05eed5f82d8",
       bscTestnet: "0x9527e2d01a3064ef6b50c1da1c0cc523803bcff2",
     },
     link: {
       sepolia: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
       polygonMumbai: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
-      avalancheFuji: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
+      fuji: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
       bscTestnet: "0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06",
     },
   }),

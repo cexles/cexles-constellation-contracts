@@ -37,7 +37,6 @@ export type BridgeParamsStruct = {
 };
 
 export const typesForBridge = {
-  // types === typesForBridge
   BridgeParams: [
     {
       name: "userAddress",

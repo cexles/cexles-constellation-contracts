@@ -1,12 +1,15 @@
 import { DeployFunction } from "hardhat-deploy/types";
 import { typedDeployments } from "@utils";
+import { DEPLOY } from "config";
+import { ZERO_ADDRESS, ZERO_BYTES } from "@test-utils";
 
 const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
   const { deploy } = typedDeployments(deployments);
   const { deployer } = await getNamedAccounts();
 
-  await deploy("MOCK_ERC721", {
+  await deploy("MockERC20", {
     from: deployer,
+    deterministicDeployment: true,
     args: [],
     log: true,
   });
@@ -14,6 +17,6 @@ const migrate: DeployFunction = async ({ deployments, getNamedAccounts, network 
   console.log("Ready \n");
 };
 
-migrate.tags = ["erc721"];
+migrate.tags = ["usdc"];
 
 export default migrate;

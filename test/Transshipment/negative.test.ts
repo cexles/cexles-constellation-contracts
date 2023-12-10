@@ -191,6 +191,43 @@ describe("Negative:", () => {
         .withArgs("0", `${fee}`);
     });
 
+    it("Method: bridgeTokens (Wrong amount)", async () => {
+      const { dstUSDC, transshipmentSender, manager, user, alice, srcDomain } = await loadFixture(
+        standardPrepare
+      );
+
+      const fees = ethers.utils.parseUnits("1", 18);
+      const userSrcAccountAddress = await transshipmentSender.getAccountAddress(user.address);
+      const userDstAccountAddress = userSrcAccountAddress; // one address for all networks
+
+      await transshipmentSender.connect(user).createAccount("name_src_1", 1);
+
+      const userDstAccount = (await ethers.getContractFactory("Account")).attach(userDstAccountAddress);
+      await dstUSDC.connect(user).mint(userDstAccount.address, 1000);
+
+      const bridgeParams: BridgeParamsStruct = {
+        userAddress: user.address,
+        userNonce: await transshipmentSender.userNonce(user.address),
+        srcTokenAddress: ZERO_ADDRESS,
+        srcTokenAmount: ethers.utils.parseUnits("20", 18),
+        dstChainSelector: 2,
+        dstExecutor: userDstAccount.address, // eq to srcAccount
+        dstTokenAddress: dstUSDC.address,
+        dstTokenAmount: ethers.utils.parseUnits("20", 18),
+        dstReceiver: alice.address,
+      };
+
+      const managerSignature = await sign(srcDomain, typesForBridge, bridgeParams, manager);
+
+      await expect(
+        transshipmentSender
+          .connect(user)
+          .bridgeTokens(managerSignature, ZERO_ADDRESS, 200000, fees, bridgeParams, {
+            value: ethers.utils.parseUnits("20", 18),
+          })
+      ).to.be.revertedWith("Wrong amount");
+    });
+
     it("Method: sendMassage (Wrong fee token)", async () => {
       const { link, srcUSDC, transshipmentSender, transshipmentReceiver, user } = await loadFixture(
         standardPrepare

@@ -1,8 +1,25 @@
-# Hardhat template, default wrapper
-
 ## Cexles smart contracts
 
 This repo will have a code of Cexles Smart Contracts.
+
+<div>
+
+<a href="https://docs.soliditylang.org/en/v0.8.19/introduction-to-smart-contracts.html">![solidity-version](https://img.shields.io/badge/Solidity-0.8.19-363636?style=for-the-badge&logo=Solidity)</a>
+<a href="https://ccip.chain.link/">![chainlink-ccip](https://img.shields.io/badge/Chainlink-CCIP-375BD2?style=for-the-badge&logo=Chainlink)</a>
+
+</div>
+
+<div>
+
+<a href="">![tests](https://img.shields.io/badge/Tests-passing-brightgreen)</a>
+<a href="">![license](https://img.shields.io/github/license/cexles/cexles-constellation-contracts)</a>
+
+</div>
+
+## Documentation
+
+<a href="https://cexless.gitbook.io/cexles/">![Documentation](https://img.shields.io/badge/GitBook-GitBook-3884FF?style=for-the-badge&logo=GitBook)</a>
+
 
 ## Setting project
 
